@@ -18,24 +18,23 @@ fn main() {
         .add_item(CustomMenuItem::new("open".to_string(), "Open").accelerator("CmdOrCtrl+O"))
         .add_native_item(CloseWindow));
 
-    let playback_speed_menu = Menu::new()
-        .add_item(CustomMenuItem::new("0.5x".to_string(), "0.5x"))
-        .add_item(CustomMenuItem::new("0.75x".to_string(), "0.75x"))
-        .add_item(CustomMenuItem::new("1x".to_string(), "1x"))
-        .add_item(CustomMenuItem::new("1.25x".to_string(), "1.25x"))
-        .add_item(CustomMenuItem::new("1.5x".to_string(), "1.5x"))
-        .add_item(CustomMenuItem::new("1.75x".to_string(), "1.75x"))
-        .add_item(CustomMenuItem::new("2x".to_string(), "2x"));
+    // let playback_speed_menu = Menu::new()
+    //     .add_item(CustomMenuItem::new("0.5x".to_string(), "0.5x"))
+    //     .add_item(CustomMenuItem::new("0.75x".to_string(), "0.75x"))
+    //     .add_item(CustomMenuItem::new("1x".to_string(), "1x"))
+    //     .add_item(CustomMenuItem::new("1.25x".to_string(), "1.25x"))
+    //     .add_item(CustomMenuItem::new("1.5x".to_string(), "1.5x"))
+    //     .add_item(CustomMenuItem::new("1.75x".to_string(), "1.75x"))
+    //     .add_item(CustomMenuItem::new("2x".to_string(), "2x"));
 
-    let playback_menu = Submenu::new("Playback", Menu::new()
-        .add_item(CustomMenuItem::new("play_pause".to_string(), "Play/Pause"))
-        .add_submenu(Submenu::new("Playback Speed", playback_speed_menu))
-        .add_item(CustomMenuItem::new("next_chapter".to_string(), "Next Chapter"))
-        .add_item(CustomMenuItem::new("prev_chapter".to_string(), "Previous Chapter")));
+    // let playback_menu = Submenu::new("Playback", Menu::new()
+    //     .add_item(CustomMenuItem::new("play_pause".to_string(), "Play/Pause"))
+    //     .add_submenu(Submenu::new("Playback Speed", playback_speed_menu))
+    //     .add_item(CustomMenuItem::new("next_chapter".to_string(), "Next Chapter"))
+    //     .add_item(CustomMenuItem::new("prev_chapter".to_string(), "Previous Chapter")));
 
-    let window_menu = Submenu::new("Window", Menu::new()
-        // Assuming you will handle listing open windows dynamically
-    );
+    // let window_menu = Submenu::new("Window", Menu::new()
+    // );
 
     let menu = Menu::new()
         .add_submenu(app_menu)
