@@ -16,6 +16,23 @@ function isAudioFile(ev) {
     return false;
 }
 
+function selectAndLoadFile() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/*';
+    fileInput.addEventListener('change', function () {
+        const file = fileInput.files[0];
+        const url = URL.createObjectURL(file);
+        player.src = { src: url, type: 'audio/mpeg' };
+        loadFile(player, url);
+        fileInput.remove();
+        document.getElementById('cover-image').style.cursor = 'default';
+        document.getElementById('cover-image').removeEventListener('click', selectAndLoadFile);
+    });
+    fileInput.click();
+}
+
+
 // if gallery is not visible, display a full screen drop overlay
 // if gallery is visible, display a drop overlay only over the hero image
 
@@ -92,6 +109,11 @@ window.addEventListener("DOMContentLoaded", async () => {
         player.src = { src: url, type: 'audio/mpeg' };
         loadFile(player, url);
     });
+
+
+    const coverImageElement = document.getElementById('cover-image');
+    coverImageElement.style.cursor = 'pointer';
+    coverImageElement.addEventListener('click', selectAndLoadFile);
 
     // document.querySelector(".container").addEventListener("click", 
     //   async function openFile() {

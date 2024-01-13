@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="a" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 864.11 240">
+  <defs>
+    <style>
+      .e {
+        fill: none;
+      }
+
+      .e, .f, .g, .h {
+        stroke-width: 0px;
+      }
+
+      .i {
+        stroke: #777;
+        stroke-dasharray: 0 1;
+        stroke-width: 2px;
+      }
+
+      .j {
+        fill: #0d6efd;
+        stroke: #0d6efd;
+      }
+
+      .k {
+        letter-spacing: .06em;
+      }
+
+      .k, .l {
+        font-size: 16px;
+      }
+
+      .k, .l, .f, .m, .h {
+        fill: #fff;
+      }
+
+      .k, .l, .m {
+        font-family: ArialMT, Arial;
+      }
+
+      .k, .l, .m, .n {
+        isolation: isolate;
+      }
+
+      .f {
+        fill-rule: evenodd;
+      }
+
+      .m {
+        font-size: 20px;
+      }
+    </style>
+  </defs>
+  <g id="b" data-name="Layer 3">
+    <rect class="g" x="-394.14" width="1261" height="240"/>
+  </g>
+  <path class="j" d="M308.46,63.4h261.2c4.4,0,8,3.6,8,8v32c0,4.4-3.6,8-8,8h-261.2c-4.4,0-8-3.6-8-8v-32c0-4.4,3.6-8,8-8Z"/>
+  <g id="c" data-name="bi1">
+    <path class="f" d="M342.98,83v11.88c0,1.37-1.13,2.5-2.5,2.5v-1.25c.75,0,1.25-.5,1.25-1.25v-11.88h-2.5c-1,0-1.88-.87-1.88-1.88v-2.5h-6.88c-.75,0-1.25.5-1.25,1.25v11.25h-1.25v-11.25c0-1.37,1.13-2.5,2.5-2.5h6.88l5.62,5.62ZM336.86,95.13h-.5v-.75h.5c.12,0,.25,0,.37-.12.12,0,.25-.12.25-.25.12-.13.12-.25.12-.37,0-.25-.12-.38-.25-.5-.12-.12-.37-.25-.5-.25h-.37c-.12,0-.12.12-.25.12-.12.12-.25.25-.25.38h-.88c0-.25,0-.38.12-.5s.25-.38.37-.5.37-.25.5-.25c.25-.12.5-.12.75-.12.37,0,.62,0,.88.12s.5.25.62.5c.12.25.25.38.25.62s0,.38-.12.62c-.12.25-.5.5-.75.5h0c.37,0,.75.25.88.5.12.25.12.37.12.62s0,.5-.12.62-.25.37-.37.5c-.12.12-.37.25-.62.25-.25.12-.5.12-.75.12-.37,0-.75-.12-1-.25-.25-.12-.5-.25-.62-.5s-.25-.5-.25-.75h.88c0,.12,0,.25.12.37s.25.12.25.25c.12,0,.25.12.5.12.12,0,.37,0,.5-.12.12,0,.25-.12.37-.25.12-.12.12-.25.12-.37,0-.25-.12-.5-.37-.62-.13.25-.38.25-.5.25h0ZM326.36,97.25v-3.25h0l1.25,2.75h.62l1.13-2.75h0v3.38h1v-5h-1l-1.37,3.25h0l-1.37-3.25h-1v5l.75-.12h0ZM333.23,92.25h-2v5h1v-1.62h1c.37,0,.62-.12.88-.25.25-.12.5-.37.62-.62s.25-.5.25-.87c0-.25-.12-.62-.25-.87-.12-.25-.37-.5-.62-.62-.25,0-.62-.13-.88-.13ZM333.86,94c0,.12,0,.37-.12.5-.12.12-.12.25-.25.25-.12.12-.25.12-.5.12h-.88v-1.75h.88c.25,0,.5.12.62.25.25.12.25.25.25.62Z"/>
+  </g>
+  <rect class="e" x="354.36" y="77.4" width="201.2" height="23.7"/>
+  <text class="m" transform="translate(354.34 94.55)"><tspan x="0" y="0">Click to select MP3 file</tspan></text>
+  <path class="i" d="M350.26,136.4h177.6c5.5,0,10,4.5,10,10v22c0,5.5-4.5,10-10,10h-177.6c-5.5,0-10-4.5-10-10v-22c0-5.6,4.5-10,10-10Z"/>
+  <rect class="e" x="351.46" y="149.7" width="147.6" height="18.9"/>
+  <g class="n">
+    <text class="l" transform="translate(351.51 163.42)"><tspan x="0" y="0">or</tspan></text>
+    <text class="k" transform="translate(365.71 163.42)"><tspan x="0" y="0"> </tspan></text>
+    <text class="l" transform="translate(371.31 163.42)"><tspan x="0" y="0">drag</tspan></text>
+    <text class="k" transform="translate(403.31 163.42)"><tspan x="0" y="0"> </tspan></text>
+    <text class="l" transform="translate(408.91 163.42)"><tspan x="0" y="0">and</tspan></text>
+    <text class="k" transform="translate(435.61 163.42)"><tspan x="0" y="0"> </tspan></text>
+    <text class="l" transform="translate(441.11 163.42)"><tspan x="0" y="0">drop</tspan></text>
+    <text class="k" transform="translate(473.11 163.42)"><tspan x="0" y="0"> </tspan></text>
+    <text class="l" transform="translate(478.71 163.42)"><tspan x="0" y="0">file </tspan></text>
+  </g>
+  <g id="d" data-name="bi2">
+    <g>
+      <path class="h" d="M506.88,159.25c.3,0,.5.2.5.5v2.5c0,.6.4,1,1,1h12c.6,0,1-.4,1-1v-2.5c0-.3.2-.5.5-.5s.5.2.5.5v2.5c0,1.1-.9,2-2,2h-12c-1.1,0-2-.9-2-2v-2.5c0-.2.3-.5.5-.5"/>
+      <path class="h" d="M514.08,150.55c.2-.2.5-.2.7,0h0l3,3c.2.2.2.5,0,.7s-.5.2-.7,0l-2.1-2.1v8.8c0,.3-.2.5-.5.5s-.5-.2-.5-.5v-8.8l-2.1,2.1c-.2.2-.5.2-.7,0s-.2-.5,0-.7l2.9-3Z"/>
+    </g>
+  </g>
+</svg>
