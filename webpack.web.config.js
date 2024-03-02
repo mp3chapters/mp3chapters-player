@@ -31,6 +31,7 @@ export default {
                 { from: 'src-web/index.html', to: 'index.html' },
                 // { from: 'src-web/example.mp3', to: 'example.mp3' },
                 // { from: 'src-web/silence.mp3', to: 'silence.mp3' },
+                { from: 'src-web/instruction.svg', to: 'instruction.svg' },
                 { from: 'src-web/vidstack', to: 'vidstack' },
             ],
         }),

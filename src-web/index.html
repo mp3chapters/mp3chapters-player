@@ -5,10 +5,10 @@
   <meta charset="UTF-8" />
   <!-- <link rel="stylesheet" href="styles.css" /> -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tauri App</title>
+  <title>MP3 Chapter Player</title>
   <script type="module" src="main.js"></script>
-  <link rel="stylesheet" href="/vidstack/theme.min.css" />
-  <link rel="stylesheet" href="/vidstack/audio.min.css" />
+  <link rel="stylesheet" href="vidstack/theme.min.css" />
+  <link rel="stylesheet" href="vidstack/audio.min.css" />
   <style>
     html,
     body {
@@ -82,6 +82,8 @@
     }
 
     .chapter-toc-item {
+      --toc-item-background-color: #1c1c1c;
+      --toc-progress-color: #3d3d3d;
       margin: 4px 0;
       position: relative;
       display: flex;
@@ -90,33 +92,33 @@
       width: 300px;
       color: white;
       border: 1px solid #666;
-      background-color: #1c1c1c;
+      background-color: var(--toc-item-background-color);
       cursor: pointer;
     }
 
     .chapter-toc-item:hover {
-      background-color: #333;
+      --toc-item-background-color: #333;
       border: 1px solid #999;
     }
 
     .chapter-toc-item:active {
-      background-color: #666;
+      --toc-item-background-color: #666;
       border: 1px solid #fff;
       transform: scale(0.98);
     }
 
     .chapter-toc-item.current-toc-item {
-      background-color: #333;
+      --toc-item-background-color: #2c2c2c;
       border: 1px solid #999;
       transform: scale(1.02);
     }
 
     .chapter-toc-item.current-toc-item:hover {
-      background-color: #444;
+      --toc-item-background-color: #444;
     }
 
     .chapter-toc-item.current-toc-item:active {
-      background-color: #666;
+      --toc-item-background-color: #666;
       border: 1px solid #fff;
       transform: scale(0.99);
     }
@@ -130,7 +132,7 @@
     }
 
     div.chapter-toc-image {
-      background-color: #000;
+      background-color: #00000090;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -182,7 +184,7 @@
   <div class="container">
     <div class="top">
       <img
-        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkqAcAAIUAgUW0RjgAAAAASUVORK5CYII="
+        src="instruction.svg"
         id="cover-image">
       <div class="chapter-toc">
         <div class="chapter-toc-list">
