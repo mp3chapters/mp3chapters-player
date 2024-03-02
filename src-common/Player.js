@@ -68,8 +68,11 @@ export function startUp() {
                         chapterItem.classList.add('current-toc-item');
                         chapterItem.scrollIntoView({block: "center", behavior: "smooth"});
                     }
+                    const percentPlayed = 100 * (window.currentTime - currentVisibleChapter.start) / (currentVisibleChapter.end - currentVisibleChapter.start);
+                    chapterItem.style.background = `linear-gradient(to right, var(--toc-progress-color) ${percentPlayed}%, var(--toc-item-background-color) ${percentPlayed}%)`;
                 } else {
                     chapterItem.classList.remove('current-toc-item');
+                    chapterItem.style.background = "";
                 }
             }
         }
