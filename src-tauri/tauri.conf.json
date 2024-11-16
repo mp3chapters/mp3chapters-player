@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "MP3 Chapter Player",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "tauri": {
     "allowlist": {
@@ -28,8 +28,18 @@
         "all": true
       },
       "protocol": {
-        "asset": true
+        "asset": true,
+        "assetScope": ["$HOME/*", "$DESKTOP/*", "$DOCUMENT/*", "$DOWNLOAD/*", "$PUBLIC/*", "$VIDEO/*"]
       }
+    },
+    "cli": {
+      "args": [
+        {
+          "name": "filename",
+          "index": 1,
+          "takesValue": true
+        }
+      ]
     },
     "bundle": {
       "active": true,
