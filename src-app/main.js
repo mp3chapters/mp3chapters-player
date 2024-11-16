@@ -6,7 +6,6 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
 import { appWindow } from "@tauri-apps/api/window";
 import { convertFileSrc } from '@tauri-apps/api/tauri';
-import { listen } from '@tauri-apps/api/event';
 import { getMatches } from '@tauri-apps/api/cli';
 
 import { loadFile } from '@common/FileLoader.js';

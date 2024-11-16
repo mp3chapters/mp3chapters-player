@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{CustomMenuItem, Menu, MenuItem::*, Submenu, AboutMetadata, Manager};
+use tauri::{CustomMenuItem, Menu, MenuItem::*, Submenu, AboutMetadata};
 
 fn main() {
     let app_menu = Submenu::new("App", Menu::new()
