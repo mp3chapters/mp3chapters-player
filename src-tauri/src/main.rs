@@ -26,9 +26,9 @@ fn main() {
         .setup(|app| {
             let args: Vec<String> = env::args().collect();
             if args.len() > 1 {
-                let file_path = &args[1];
+                let file_path = args[1].clone();
                 let main_window = app.get_window("main").unwrap();
-                main_window.once("tauri://ready", move |_| {
+                main_window.clone().once("tauri://ready", move |_| {
                     main_window.emit("load-file", file_path).unwrap();
                 });
             }
