@@ -6,22 +6,26 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
 import { appWindow } from "@tauri-apps/api/window";
 import { convertFileSrc } from '@tauri-apps/api/tauri';
-import { listen } from '@tauri-apps/api/event'
+import { getMatches } from '@tauri-apps/api/cli';
 
 import { loadFile } from '@common/FileLoader.js';
 import { startUp } from '@common/Player.js';
+
+function handleMP3FilePath(filePath) {
+    const url = convertFileSrc(filePath);
+    console.log("Opening file: " + url);
+    player.src = { src: url, type: 'audio/mpeg' };
+    loadFile(player, url);
+    const fileName = filePath.split('\\').pop().split('/').pop();
+    appWindow.setTitle(fileName);
+}
 
 listen('tauri://file-drop', event => {
     console.log(event);
     const filesDrop = event.payload;
     for (let file of filesDrop) {
         if (file.endsWith('.mp3')) {
-            const url = convertFileSrc(file);
-            console.log(url);
-            player.src = { src: url, type: 'audio/mpeg' };
-            loadFile(player, url);
-            const fileName = file.split('\\').pop().split('/').pop();
-            appWindow.setTitle(fileName);
+            handleMP3FilePath(file);
             break;
         }
     }
@@ -37,12 +41,9 @@ async function openFile() {
         ],
     });
     console.log(selected);
-    const url = convertFileSrc(selected);
-    console.log(url);
-    player.src = { src: url, type: 'audio/mpeg' };
-    loadFile(player, url);
-    const fileName = selected.split('\\').pop().split('/').pop();
-    appWindow.setTitle(fileName);
+    if (selected) {
+        handleMP3FilePath(selected);
+    }
 }
 
 const unlisten = await appWindow.onMenuClicked(async ({ payload: menuId }) => {
@@ -56,11 +57,13 @@ const player = document.querySelector("media-player");
 
 startUp();
 
-window.addEventListener("DOMContentLoaded", async () => {
-    // greetInputEl = document.querySelector("#greet-input");
-    // greetMsgEl = document.querySelector("#greet-msg");
-    // document.querySelector("#greet-form").addEventListener("submit", (e) => {
-    //   e.preventDefault();
-    //   greet();
-    // });
+// reading arguments from the command line
+getMatches().then((matches) => {
+    console.log("Matches:");
+    console.log(matches);
+    window.matches = matches;
+    if (matches.args.filename.value) {
+        console.log(matches.args.filename.value);
+        handleMP3FilePath(matches.args.filename.value);
+    }
 });

@@ -28,8 +28,18 @@
         "all": true
       },
       "protocol": {
-        "asset": true
+        "asset": true,
+        "assetScope": ["$HOME/*", "$DESKTOP/*", "$DOCUMENT/*", "$DOWNLOAD/*", "$PUBLIC/*", "$VIDEO/*"]
       }
+    },
+    "cli": {
+      "args": [
+        {
+          "name": "filename",
+          "index": 1,
+          "takesValue": true
+        }
+      ]
     },
     "bundle": {
       "active": true,
