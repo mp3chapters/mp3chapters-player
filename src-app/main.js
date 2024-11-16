@@ -64,3 +64,16 @@ window.addEventListener("DOMContentLoaded", async () => {
     //   greet();
     // });
 });
+
+function handleMP3FilePath(filePath) {
+    const url = convertFileSrc(filePath);
+    player.src = { src: url, type: 'audio/mpeg' };
+    loadFile(player, url);
+    const fileName = filePath.split('\\').pop().split('/').pop();
+    appWindow.setTitle(fileName);
+}
+
+listen('load-file', event => {
+    const filePath = event.payload;
+    handleMP3FilePath(filePath);
+});
