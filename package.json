@@ -1,7 +1,7 @@
 {
   "name": "mp3chapters-player",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "scripts": {
     "tauri": "webpack --config webpack.tauri.config.js && tauri",
