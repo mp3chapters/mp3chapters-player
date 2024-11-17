@@ -7,6 +7,7 @@ import { open } from '@tauri-apps/api/dialog';
 import { appWindow } from "@tauri-apps/api/window";
 import { convertFileSrc } from '@tauri-apps/api/tauri';
 import { getMatches } from '@tauri-apps/api/cli';
+import { listen } from '@tauri-apps/api/event';
 
 import { loadFile } from '@common/FileLoader.js';
 import { startUp } from '@common/Player.js';
