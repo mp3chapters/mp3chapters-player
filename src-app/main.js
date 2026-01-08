@@ -12,13 +12,17 @@ import { listen } from '@tauri-apps/api/event';
 import { loadFile } from '@common/FileLoader.js';
 import { startUp } from '@common/Player.js';
 
-function handleMP3FilePath(filePath) {
+async function handleMP3FilePath(filePath) {
     const url = convertFileSrc(filePath);
     console.log("Opening file: " + url);
     player.src = { src: url, type: 'audio/mpeg' };
-    loadFile(player, url);
     const fileName = filePath.split('\\').pop().split('/').pop();
-    appWindow.setTitle(fileName);
+    const { id3Title } = await loadFile(player, url);
+    if (id3Title) {
+        appWindow.setTitle(`${id3Title} [${fileName}]`);
+    } else {
+        appWindow.setTitle(fileName);
+    }
 }
 
 listen('tauri://file-drop', event => {

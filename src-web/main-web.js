@@ -20,11 +20,17 @@ function selectAndLoadFile() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'audio/*';
-    fileInput.addEventListener('change', function () {
+    fileInput.addEventListener('change', async function () {
         const file = fileInput.files[0];
+        const fileName = file.name;
         const url = URL.createObjectURL(file);
         player.src = { src: url, type: 'audio/mpeg' };
-        loadFile(player, url);
+        const { id3Title } = await loadFile(player, url);
+        if (id3Title) {
+            document.title = `${id3Title} [${fileName}]`;
+        } else {
+            document.title = fileName;
+        }
         fileInput.remove();
         document.getElementById('cover-image').style.cursor = 'default';
         document.getElementById('cover-image').removeEventListener('click', selectAndLoadFile);
@@ -103,11 +109,16 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     startUp();
 
-    initializeDragDrop((filename, blob) => {
+    initializeDragDrop(async (filename, blob) => {
         const file = new File([blob], filename);
         const url = URL.createObjectURL(file);
         player.src = { src: url, type: 'audio/mpeg' };
-        loadFile(player, url);
+        const { id3Title } = await loadFile(player, url);
+        if (id3Title) {
+            document.title = `${id3Title} [${filename}]`;
+        } else {
+            document.title = filename;
+        }
     });
 
 
