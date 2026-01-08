@@ -4,7 +4,7 @@ use tauri::{CustomMenuItem, Menu, MenuItem::*, Submenu, AboutMetadata};
 
 fn main() {
     let app_menu = Submenu::new("App", Menu::new()
-        .add_native_item(About("MP3 Chapter Player".to_string(), 
+        .add_native_item(About("MP3 Chapter Player".to_string(),
             AboutMetadata::default()
                 .website("https://mp3chapters.github.io")
                 .license("MIT")
@@ -16,9 +16,13 @@ fn main() {
         .add_item(CustomMenuItem::new("open".to_string(), "Open").accelerator("CmdOrCtrl+O"))
         .add_native_item(CloseWindow));
 
+    let help_menu = Submenu::new("Help", Menu::new()
+        .add_item(CustomMenuItem::new("keyboard_shortcuts".to_string(), "Keyboard Shortcuts").accelerator("CmdOrCtrl+/")));
+
     let menu = Menu::new()
         .add_submenu(app_menu)
-        .add_submenu(file_menu);
+        .add_submenu(file_menu)
+        .add_submenu(help_menu);
 
     tauri::Builder::default()
         .menu(menu)

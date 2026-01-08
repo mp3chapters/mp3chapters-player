@@ -117,6 +117,21 @@ function setupKeyboardShortcuts(player, chapters) {
                 const percent = parseInt(key) * 10;
                 player.currentTime = (percent / 100) * player.duration;
                 break;
+
+            // Show/hide keyboard shortcuts: ?
+            case '?':
+                e.preventDefault();
+                toggleShortcutsPanel();
+                break;
+
+            // Close shortcuts panel: Escape
+            case 'escape':
+                const panel = document.getElementById('shortcuts-panel');
+                if (panel && !panel.classList.contains('hidden')) {
+                    e.preventDefault();
+                    panel.classList.add('hidden');
+                }
+                break;
         }
     });
 }
@@ -150,6 +165,17 @@ function goToPreviousChapter(player, chapters) {
         player.currentTime = 0;
     }
 }
+
+// Toggle keyboard shortcuts help panel
+export function toggleShortcutsPanel() {
+    const panel = document.getElementById('shortcuts-panel');
+    if (panel) {
+        panel.classList.toggle('hidden');
+    }
+}
+
+// Make it available globally for the onclick handler
+window.toggleShortcutsPanel = toggleShortcutsPanel;
 
 export function startUp() {
     const chapters = new ChapterList();

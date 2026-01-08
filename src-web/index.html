@@ -177,10 +177,156 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
+    /* Keyboard Shortcuts Panel */
+    .shortcuts-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.2s ease;
+    }
+
+    .shortcuts-panel.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .shortcuts-content {
+      background: #1c1c1c;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid #444;
+    }
+
+    .shortcuts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 12px;
+    }
+
+    .shortcuts-header h2 {
+      margin: 0;
+      color: #fff;
+      font-size: 1.3em;
+      font-weight: 500;
+    }
+
+    .shortcuts-close {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 1.5em;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .shortcuts-close:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .shortcut-section h3 {
+      color: #888;
+      font-size: 0.85em;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 10px 0;
+    }
+
+    .shortcut-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      color: #ccc;
+      font-size: 0.9em;
+    }
+
+    .shortcut-row span {
+      color: #999;
+    }
+
+    kbd {
+      background: #333;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: inherit;
+      font-size: 0.85em;
+      color: #fff;
+      min-width: 24px;
+      text-align: center;
+      display: inline-block;
+    }
   </style>
 </head>
 
 <body>
+  <!-- Keyboard Shortcuts Panel -->
+  <div id="shortcuts-panel" class="shortcuts-panel hidden">
+    <div class="shortcuts-content">
+      <div class="shortcuts-header">
+        <h2>Keyboard Shortcuts</h2>
+        <button class="shortcuts-close" onclick="window.toggleShortcutsPanel()">&times;</button>
+      </div>
+      <div class="shortcuts-grid">
+        <div class="shortcut-section">
+          <h3>Playback</h3>
+          <div class="shortcut-row"><kbd>Space</kbd> or <kbd>K</kbd><span>Play / Pause</span></div>
+          <div class="shortcut-row"><kbd>M</kbd><span>Mute / Unmute</span></div>
+          <div class="shortcut-row"><kbd>Home</kbd><span>Go to beginning</span></div>
+          <div class="shortcut-row"><kbd>End</kbd><span>Go to end</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h3>Seeking</h3>
+          <div class="shortcut-row"><kbd>&larr;</kbd> or <kbd>J</kbd><span>Rewind 10s</span></div>
+          <div class="shortcut-row"><kbd>&rarr;</kbd> or <kbd>L</kbd><span>Forward 10s</span></div>
+          <div class="shortcut-row"><kbd>0</kbd>-<kbd>9</kbd><span>Jump to 0%-90%</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h3>Volume</h3>
+          <div class="shortcut-row"><kbd>&uarr;</kbd><span>Volume up</span></div>
+          <div class="shortcut-row"><kbd>&darr;</kbd><span>Volume down</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h3>Speed</h3>
+          <div class="shortcut-row"><kbd>[</kbd> or <kbd>,</kbd><span>Slower</span></div>
+          <div class="shortcut-row"><kbd>]</kbd> or <kbd>.</kbd><span>Faster</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h3>Chapters</h3>
+          <div class="shortcut-row"><kbd>N</kbd> or <kbd>PgDn</kbd><span>Next chapter</span></div>
+          <div class="shortcut-row"><kbd>P</kbd> or <kbd>PgUp</kbd><span>Previous chapter</span></div>
+        </div>
+        <div class="shortcut-section">
+          <h3>Help</h3>
+          <div class="shortcut-row"><kbd>?</kbd><span>Toggle this panel</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="top">
       <img

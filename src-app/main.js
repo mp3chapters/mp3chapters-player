@@ -10,7 +10,7 @@ import { getMatches } from '@tauri-apps/api/cli';
 import { listen } from '@tauri-apps/api/event';
 
 import { loadFile } from '@common/FileLoader.js';
-import { startUp } from '@common/Player.js';
+import { startUp, toggleShortcutsPanel } from '@common/Player.js';
 
 async function handleMP3FilePath(filePath) {
     const url = convertFileSrc(filePath);
@@ -55,6 +55,8 @@ const unlisten = await appWindow.onMenuClicked(async ({ payload: menuId }) => {
     console.log('Menu clicked: ' + menuId);
     if (menuId == 'open') {
         openFile();
+    } else if (menuId == 'keyboard_shortcuts') {
+        toggleShortcutsPanel();
     }
 });
 
