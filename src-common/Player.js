@@ -3,11 +3,11 @@ import { ChapterList } from '@common/ChapterList.js';
 
 // Keyboard shortcuts configuration
 // Standard shortcuts based on VLC, YouTube, and other popular media players
-const SEEK_SECONDS = 10;
-const VOLUME_STEP = 0.1; // 10%
-const SPEED_STEP = 0.25;
-const MIN_SPEED = 0.25;
-const MAX_SPEED = 3.0;
+export const SEEK_SECONDS = 10;
+export const VOLUME_STEP = 0.1; // 10%
+export const SPEED_STEP = 0.25;
+export const MIN_SPEED = 0.25;
+export const MAX_SPEED = 3.0;
 
 function setupKeyboardShortcuts(player, chapters) {
     document.addEventListener('keydown', (e) => {
@@ -136,7 +136,7 @@ function setupKeyboardShortcuts(player, chapters) {
     });
 }
 
-function goToNextChapter(player, chapters) {
+export function goToNextChapter(player, chapters) {
     const currentTimeMs = player.currentTime * 1000;
     const nextChapter = chapters.nextChapterAfterTime(currentTimeMs);
     if (nextChapter) {
@@ -144,7 +144,7 @@ function goToNextChapter(player, chapters) {
     }
 }
 
-function goToPreviousChapter(player, chapters) {
+export function goToPreviousChapter(player, chapters) {
     const currentTimeMs = player.currentTime * 1000;
     const currentChapter = chapters.visibleChapterAtTime(currentTimeMs);
 
@@ -156,8 +156,18 @@ function goToPreviousChapter(player, chapters) {
             player.currentTime = currentChapter.start / 1000;
             return;
         }
+        // Within first 3 seconds: go to previous chapter
+        // Look for chapter before the START of the current chapter, not current time
+        const prevChapter = chapters.previousChapterBeforeTime(currentChapter.start);
+        if (prevChapter) {
+            player.currentTime = prevChapter.start / 1000;
+        } else {
+            player.currentTime = 0;
+        }
+        return;
     }
 
+    // No current chapter found, try to find any previous chapter
     const prevChapter = chapters.previousChapterBeforeTime(currentTimeMs);
     if (prevChapter) {
         player.currentTime = prevChapter.start / 1000;
