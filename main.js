@@ -15401,6 +15401,29 @@ class ChapterList {
         return undefined;
     }
 
+    // Get the next chapter after the given time (only TOC entries)
+    nextChapterAfterTime(time) {
+        for (let chapter of this.chapters) {
+            if (chapter.toc && chapter.start > time) {
+                return chapter;
+            }
+        }
+        return undefined;
+    }
+
+    // Get the previous chapter before the given time (only TOC entries)
+    previousChapterBeforeTime(time) {
+        let prevChapter = undefined;
+        for (let chapter of this.chapters) {
+            if (chapter.toc && chapter.start < time) {
+                prevChapter = chapter;
+            } else if (chapter.start >= time) {
+                break;
+            }
+        }
+        return prevChapter;
+    }
+
     // Method to get chapters
     getChapters() {
         return this.chapters;
@@ -15609,12 +15632,18 @@ async function loadFile(player, url) {
     window.currentFile = file;
     window.chapters.duration = -1;
     window.chapterImages = [];
+    window.id3Title = null; // Will be set if ID3 title tag exists
 
     let tags = await new Promise((resolve) => {
         readTags(file, (fileTags) => {
             resolve(fileTags);
         });
     });
+
+    // Extract ID3 title if available
+    if (tags.hasOwnProperty('title') && tags.title) {
+        window.id3Title = tags.title;
+    }
 
     // console.log(tags);
     let toc = [];
@@ -15688,6 +15717,9 @@ async function loadFile(player, url) {
     // buildGallery();
 
     // document.getElementById('filename').innerText = file.name;
+
+    // Return the ID3 title for use by callers (e.g., setting window title)
+    return { id3Title: window.id3Title };
 }
 
 /***/ }),
@@ -15700,12 +15732,206 @@ async function loadFile(player, url) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   startUp: () => (/* binding */ startUp)
+/* harmony export */   MAX_SPEED: () => (/* binding */ MAX_SPEED),
+/* harmony export */   MIN_SPEED: () => (/* binding */ MIN_SPEED),
+/* harmony export */   SEEK_SECONDS: () => (/* binding */ SEEK_SECONDS),
+/* harmony export */   SPEED_STEP: () => (/* binding */ SPEED_STEP),
+/* harmony export */   VOLUME_STEP: () => (/* binding */ VOLUME_STEP),
+/* harmony export */   goToNextChapter: () => (/* binding */ goToNextChapter),
+/* harmony export */   goToPreviousChapter: () => (/* binding */ goToPreviousChapter),
+/* harmony export */   startUp: () => (/* binding */ startUp),
+/* harmony export */   toggleShortcutsPanel: () => (/* binding */ toggleShortcutsPanel)
 /* harmony export */ });
 /* harmony import */ var _common_node_id3_browserify_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @common/node-id3-browserify.js */ "./src-common/node-id3-browserify.js");
 /* harmony import */ var _common_ChapterList_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @common/ChapterList.js */ "./src-common/ChapterList.js");
 
 
+
+// Keyboard shortcuts configuration
+// Standard shortcuts based on VLC, YouTube, and other popular media players
+const SEEK_SECONDS = 10;
+const VOLUME_STEP = 0.1; // 10%
+const SPEED_STEP = 0.25;
+const MIN_SPEED = 0.25;
+const MAX_SPEED = 3.0;
+
+function setupKeyboardShortcuts(player, chapters) {
+    document.addEventListener('keydown', (e) => {
+        // Ignore shortcuts when typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+
+        const key = e.key.toLowerCase();
+
+        switch (key) {
+            // Play/Pause: Space or K (YouTube style)
+            case ' ':
+            case 'k':
+                e.preventDefault();
+                if (player.paused) {
+                    player.play();
+                } else {
+                    player.pause();
+                }
+                break;
+
+            // Mute/Unmute: M
+            case 'm':
+                e.preventDefault();
+                player.muted = !player.muted;
+                break;
+
+            // Volume Up: Up Arrow
+            case 'arrowup':
+                e.preventDefault();
+                player.volume = Math.min(1, player.volume + VOLUME_STEP);
+                break;
+
+            // Volume Down: Down Arrow
+            case 'arrowdown':
+                e.preventDefault();
+                player.volume = Math.max(0, player.volume - VOLUME_STEP);
+                break;
+
+            // Seek Forward: Right Arrow or L (YouTube style)
+            case 'arrowright':
+            case 'l':
+                e.preventDefault();
+                player.currentTime = Math.min(player.duration, player.currentTime + SEEK_SECONDS);
+                break;
+
+            // Seek Backward: Left Arrow or J (YouTube style)
+            case 'arrowleft':
+            case 'j':
+                e.preventDefault();
+                player.currentTime = Math.max(0, player.currentTime - SEEK_SECONDS);
+                break;
+
+            // Decrease Playback Speed: [ or , (< without shift)
+            case '[':
+            case ',':
+                e.preventDefault();
+                player.playbackRate = Math.max(MIN_SPEED, player.playbackRate - SPEED_STEP);
+                break;
+
+            // Increase Playback Speed: ] or . (> without shift)
+            case ']':
+            case '.':
+                e.preventDefault();
+                player.playbackRate = Math.min(MAX_SPEED, player.playbackRate + SPEED_STEP);
+                break;
+
+            // Next Chapter: N or Page Down
+            case 'n':
+            case 'pagedown':
+                e.preventDefault();
+                goToNextChapter(player, chapters);
+                break;
+
+            // Previous Chapter: P or Page Up
+            case 'p':
+            case 'pageup':
+                e.preventDefault();
+                goToPreviousChapter(player, chapters);
+                break;
+
+            // Go to Beginning: Home
+            case 'home':
+                e.preventDefault();
+                player.currentTime = 0;
+                break;
+
+            // Go to End: End
+            case 'end':
+                e.preventDefault();
+                player.currentTime = player.duration;
+                break;
+
+            // Jump to percentage: 0-9 keys
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                e.preventDefault();
+                const percent = parseInt(key) * 10;
+                player.currentTime = (percent / 100) * player.duration;
+                break;
+
+            // Show/hide keyboard shortcuts: ?
+            case '?':
+                e.preventDefault();
+                toggleShortcutsPanel();
+                break;
+
+            // Close shortcuts panel: Escape
+            case 'escape':
+                const panel = document.getElementById('shortcuts-panel');
+                if (panel && !panel.classList.contains('hidden')) {
+                    e.preventDefault();
+                    panel.classList.add('hidden');
+                }
+                break;
+        }
+    });
+}
+
+function goToNextChapter(player, chapters) {
+    const currentTimeMs = player.currentTime * 1000;
+    const nextChapter = chapters.nextChapterAfterTime(currentTimeMs);
+    if (nextChapter) {
+        player.currentTime = nextChapter.start / 1000;
+    }
+}
+
+function goToPreviousChapter(player, chapters) {
+    const currentTimeMs = player.currentTime * 1000;
+    const currentChapter = chapters.visibleChapterAtTime(currentTimeMs);
+
+    // If we're more than 3 seconds into the current chapter, go to its start
+    // Otherwise, go to the previous chapter
+    if (currentChapter && currentChapter.toc) {
+        const secondsIntoChapter = (currentTimeMs - currentChapter.start) / 1000;
+        if (secondsIntoChapter > 3) {
+            player.currentTime = currentChapter.start / 1000;
+            return;
+        }
+        // Within first 3 seconds: go to previous chapter
+        // Look for chapter before the START of the current chapter, not current time
+        const prevChapter = chapters.previousChapterBeforeTime(currentChapter.start);
+        if (prevChapter) {
+            player.currentTime = prevChapter.start / 1000;
+        } else {
+            player.currentTime = 0;
+        }
+        return;
+    }
+
+    // No current chapter found, try to find any previous chapter
+    const prevChapter = chapters.previousChapterBeforeTime(currentTimeMs);
+    if (prevChapter) {
+        player.currentTime = prevChapter.start / 1000;
+    } else {
+        player.currentTime = 0;
+    }
+}
+
+// Toggle keyboard shortcuts help panel
+function toggleShortcutsPanel() {
+    const panel = document.getElementById('shortcuts-panel');
+    if (panel) {
+        panel.classList.toggle('hidden');
+    }
+}
+
+// Make it available globally for the onclick handler
+window.toggleShortcutsPanel = toggleShortcutsPanel;
 
 function startUp() {
     const chapters = new _common_ChapterList_js__WEBPACK_IMPORTED_MODULE_1__.ChapterList();
@@ -15715,6 +15941,9 @@ function startUp() {
 
     const player = document.querySelector("media-player");
     window.player = player;
+
+    // Set up keyboard shortcuts for playback control
+    setupKeyboardShortcuts(player, chapters);
 
     setTimeout(() => {
         document.querySelector("media-play-button").disabled = true;
@@ -37750,11 +37979,17 @@ function selectAndLoadFile() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'audio/*';
-    fileInput.addEventListener('change', function () {
+    fileInput.addEventListener('change', async function () {
         const file = fileInput.files[0];
+        const fileName = file.name;
         const url = URL.createObjectURL(file);
         player.src = { src: url, type: 'audio/mpeg' };
-        (0,_common_FileLoader_js__WEBPACK_IMPORTED_MODULE_4__.loadFile)(player, url);
+        const { id3Title } = await (0,_common_FileLoader_js__WEBPACK_IMPORTED_MODULE_4__.loadFile)(player, url);
+        if (id3Title) {
+            document.title = `${id3Title} [${fileName}]`;
+        } else {
+            document.title = fileName;
+        }
         fileInput.remove();
         document.getElementById('cover-image').style.cursor = 'default';
         document.getElementById('cover-image').removeEventListener('click', selectAndLoadFile);
@@ -37833,11 +38068,16 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     (0,_common_Player_js__WEBPACK_IMPORTED_MODULE_3__.startUp)();
 
-    initializeDragDrop((filename, blob) => {
+    initializeDragDrop(async (filename, blob) => {
         const file = new File([blob], filename);
         const url = URL.createObjectURL(file);
         player.src = { src: url, type: 'audio/mpeg' };
-        (0,_common_FileLoader_js__WEBPACK_IMPORTED_MODULE_4__.loadFile)(player, url);
+        const { id3Title } = await (0,_common_FileLoader_js__WEBPACK_IMPORTED_MODULE_4__.loadFile)(player, url);
+        if (id3Title) {
+            document.title = `${id3Title} [${filename}]`;
+        } else {
+            document.title = filename;
+        }
     });
 
 
