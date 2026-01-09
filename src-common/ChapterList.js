@@ -72,6 +72,29 @@ export class ChapterList {
         return undefined;
     }
 
+    // Get the next chapter after the given time (only TOC entries)
+    nextChapterAfterTime(time) {
+        for (let chapter of this.chapters) {
+            if (chapter.toc && chapter.start > time) {
+                return chapter;
+            }
+        }
+        return undefined;
+    }
+
+    // Get the previous chapter before the given time (only TOC entries)
+    previousChapterBeforeTime(time) {
+        let prevChapter = undefined;
+        for (let chapter of this.chapters) {
+            if (chapter.toc && chapter.start < time) {
+                prevChapter = chapter;
+            } else if (chapter.start >= time) {
+                break;
+            }
+        }
+        return prevChapter;
+    }
+
     // Method to get chapters
     getChapters() {
         return this.chapters;

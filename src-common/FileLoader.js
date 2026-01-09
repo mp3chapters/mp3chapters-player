@@ -17,12 +17,18 @@ export async function loadFile(player, url) {
     window.currentFile = file;
     window.chapters.duration = -1;
     window.chapterImages = [];
+    window.id3Title = null; // Will be set if ID3 title tag exists
 
     let tags = await new Promise((resolve) => {
         readTags(file, (fileTags) => {
             resolve(fileTags);
         });
     });
+
+    // Extract ID3 title if available
+    if (tags.hasOwnProperty('title') && tags.title) {
+        window.id3Title = tags.title;
+    }
 
     // console.log(tags);
     let toc = [];
@@ -96,4 +102,7 @@ export async function loadFile(player, url) {
     // buildGallery();
 
     // document.getElementById('filename').innerText = file.name;
+
+    // Return the ID3 title for use by callers (e.g., setting window title)
+    return { id3Title: window.id3Title };
 }
