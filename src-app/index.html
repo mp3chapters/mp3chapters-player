@@ -13,36 +13,244 @@
     html,
     body {
       overscroll-behavior: none;
-      background-color: #000;
-      font-family: var(--media-font-family, sans-serif);
+      background-color: #ececec;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       box-sizing: border-box;
+      color: #1d1d1f;
     }
 
     body {
       padding: 0;
       margin: 0;
-      --player-height: 80px;
+      --player-height: 72px;
+      --sidebar-width: 240px;
+      --titlebar-height: 52px;
     }
 
-    /* media player should be at the bottom of the container */
     .container {
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
       height: 100vh;
       margin: 0;
     }
 
-    media-player {
-      border: 0;
+    .top {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Sidebar */
+    .chapter-toc {
+      width: var(--sidebar-width);
+      min-width: 180px;
+      max-width: 50vw;
+      background-color: #e8e6e3;
+      border-right: 1px solid #d1d1d1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+
+    .sidebar-resize-handle {
+      position: absolute;
+      top: 0;
+      right: -3px;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 10;
+    }
+
+    .sidebar-drag-region {
+      height: var(--titlebar-height);
+      min-height: var(--titlebar-height);
+      -webkit-app-region: drag;
+    }
+
+    .chapter-toc-list {
+      display: flex;
+      flex-direction: column;
+      padding: 4px 8px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      gap: 1px;
+    }
+
+    .chapter-toc-item {
+      --toc-item-background-color: transparent;
+      --toc-progress-color: rgba(0, 0, 0, 0.06);
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 6px 8px;
+      color: #1d1d1f;
+      border-radius: 6px;
+      background-color: var(--toc-item-background-color);
+      cursor: pointer;
+      border: none;
+    }
+
+    .chapter-toc-item:hover {
+      --toc-item-background-color: rgba(0, 0, 0, 0.05);
+      --toc-progress-color: rgba(0, 0, 0, 0.09);
+    }
+
+    .chapter-toc-item:active {
+      --toc-item-background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .chapter-toc-item.current-toc-item {
+      --toc-item-background-color: transparent;
+      --toc-progress-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .chapter-toc-item.current-toc-item:hover {
+      --toc-item-background-color: rgba(0, 0, 0, 0.04);
+      --toc-progress-color: rgba(0, 0, 0, 0.09);
+    }
+
+    .chapter-toc-item.current-toc-item:active {
+      --toc-item-background-color: rgba(0, 0, 0, 0.18);
+    }
+
+    .chapter-toc-image {
+      min-width: 44px;
+      width: 44px;
+      height: 44px;
+      margin-right: 10px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    div.chapter-toc-image {
+      background-color: rgba(0, 0, 0, 0.06);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.85em;
+      color: #999;
+    }
+
+    .chapter-toc-item-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .chapter-toc-item-title {
+      font-size: 0.8em;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chapter-toc-item-time {
+      float: right;
+      background: rgba(0, 0, 0, 0.08);
+      color: #666;
+      padding: 1px 5px;
+      margin-left: 4px;
+      border-radius: 3px;
+      font-size: 0.7em;
+      font-weight: 400;
+    }
+
+    .chapter-toc-item-duration {
+      margin-top: 2px;
+      font-size: 0.7em;
+      color: #888;
+    }
+
+    .chapter-toc-item-link {
+      font-size: 0.7em;
+      color: #0066cc;
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chapter-toc-item-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Main content area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background-color: #ececec;
+      position: relative;
+    }
+
+    .chapter-url-chip {
+      display: none;
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.08);
+      color: #333;
+      font-size: 0.75em;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-decoration: none;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chapter-url-chip:hover {
+      background: rgba(0, 0, 0, 0.14);
+      text-decoration: underline;
+    }
+
+    .chapter-url-chip.visible {
+      display: block;
+    }
+
+    .main-drag-region {
+      height: var(--titlebar-height);
+      min-height: var(--titlebar-height);
+      -webkit-app-region: drag;
     }
 
     #cover-image {
       object-fit: contain;
       flex: 1;
-      width: 100px;
-      height: calc(100vh - var(--player-height));
+      min-height: 0;
+      width: 100%;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    /* Player bar */
+    media-player {
+      border: 0;
+      border-top: 1px solid #d1d1d1;
+      background: #f6f6f6;
+      --media-brand: #333;
+      --media-focus-ring-color: #0066cc;
+      --media-controls-color: hsl(300, 3%, 20%);
+      --media-button-color: hsl(240, 3%, 20%);
+      --media-button-hover-bg: rgba(0, 0, 0, 0.08);
+      --media-button-touch-hover-bg: rgba(0, 0, 0, 0.08);
+      --media-chapter-title-color: rgba(0, 0, 0, 0.5);
+      --media-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --media-slider-track-bg: rgba(0, 0, 0, 0.25);
+      --media-slider-track-fill-bg: #1d1d1f;
+      --audio-bg: #f6f6f6;
+      --audio-border-radius: 0;
+      color: #1d1d1f;
     }
 
     .vds-slider-chapter-title {
@@ -54,130 +262,6 @@
       display: none !important;
     }
 
-    .top {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: flex-end;
-      width: 100vw;
-      height: calc(100vh - var(--player-height));
-      flex: 1;
-    }
-
-    .chapter-toc {
-      width: 340px;
-      min-width: 340px;
-      height: calc(100vh - var(--player-height));
-      padding: 10px 0;
-    }
-
-    .chapter-toc-list {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-      padding: 10px;
-      height: calc(100vh - var(--player-height));
-      overflow-y: scroll;
-    }
-
-    .chapter-toc-item {
-      --toc-item-background-color: #1c1c1c;
-      --toc-progress-color: #3d3d3d;
-      margin: 4px 0;
-      position: relative;
-      display: flex;
-      flex-direction: row;
-      padding: 10px;
-      width: 300px;
-      color: white;
-      border: 1px solid #666;
-      background-color: var(--toc-item-background-color);
-      cursor: pointer;
-    }
-
-    .chapter-toc-item:hover {
-      --toc-item-background-color: #333;
-      border: 1px solid #999;
-    }
-
-    .chapter-toc-item:active {
-      --toc-item-background-color: #666;
-      border: 1px solid #fff;
-      transform: scale(0.98);
-    }
-
-    .chapter-toc-item.current-toc-item {
-      --toc-item-background-color: #2c2c2c;
-      border: 1px solid #999;
-      transform: scale(1.02);
-    }
-
-    .chapter-toc-item.current-toc-item:hover {
-      --toc-item-background-color: #444;
-    }
-
-    .chapter-toc-item.current-toc-item:active {
-      --toc-item-background-color: #666;
-      border: 1px solid #fff;
-      transform: scale(0.99);
-    }
-
-    .chapter-toc-image {
-      min-width: 65px;
-      width: 65px;
-      height: 65px;
-      margin-right: 10px;
-      object-fit: contain;
-    }
-
-    div.chapter-toc-image {
-      background-color: #00000090;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 1em;
-      color: #bbb;
-    }
-
-    .chapter-toc-item-text {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-    }
-
-    .chapter-toc-item-title {
-      font-size: 0.9em;
-      min-width: 225px;
-    }
-
-    .chapter-toc-item-time {
-      float: right;
-      background: #333;
-      color: #ddd;
-      padding: 2px 5px;
-      margin-left: 2px;
-      border-radius: 4px;
-      font-size: 0.75em;
-    }
-
-    .chapter-toc-item-duration {
-      margin-top: 3px;
-      font-size: 0.75em;
-      color: #bbb;
-    }
-
-    .chapter-toc-item-link {
-      font-size: 0.75em;
-      color: #4f91ff;
-      text-decoration: none;
-      max-width: 225px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     /* Keyboard Shortcuts Panel */
     .shortcuts-panel {
       position: fixed;
@@ -185,7 +269,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.4);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -200,13 +284,14 @@
     }
 
     .shortcuts-content {
-      background: #1c1c1c;
+      background: #fff;
       border-radius: 12px;
       padding: 24px;
       max-width: 600px;
       max-height: 80vh;
       overflow-y: auto;
-      border: 1px solid #444;
+      border: 1px solid #d1d1d1;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     }
 
     .shortcuts-header {
@@ -214,15 +299,15 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid #e5e5e5;
       padding-bottom: 12px;
     }
 
     .shortcuts-header h2 {
       margin: 0;
-      color: #fff;
+      color: #1d1d1f;
       font-size: 1.3em;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .shortcuts-close {
@@ -236,8 +321,8 @@
     }
 
     .shortcuts-close:hover {
-      background: #333;
-      color: #fff;
+      background: #f0f0f0;
+      color: #333;
     }
 
     .shortcuts-grid {
@@ -259,25 +344,85 @@
       justify-content: space-between;
       align-items: center;
       padding: 6px 0;
-      color: #ccc;
+      color: #333;
       font-size: 0.9em;
     }
 
     .shortcut-row span {
-      color: #999;
+      color: #666;
     }
 
     kbd {
-      background: #333;
-      border: 1px solid #555;
+      background: #f0f0f0;
+      border: 1px solid #d1d1d1;
       border-radius: 4px;
       padding: 2px 8px;
       font-family: inherit;
       font-size: 0.85em;
-      color: #fff;
+      color: #333;
       min-width: 24px;
       text-align: center;
       display: inline-block;
+    }
+    /* Vertical layout for narrow windows */
+    @media (max-width: 576px) {
+      .top {
+        flex-direction: column;
+      }
+
+      .chapter-toc {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        border-right: none;
+        border-bottom: 1px solid #d1d1d1;
+        height: auto;
+        flex: 1;
+        min-height: 0;
+        order: 2;
+      }
+
+      .sidebar-drag-region {
+        display: none;
+      }
+
+      .sidebar-resize-handle {
+        top: -3px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 6px;
+        cursor: row-resize;
+      }
+
+      .main-content {
+        order: 1;
+        flex: 0 0 200px;
+        overflow: hidden;
+      }
+
+      #cover-image {
+        flex: 1;
+        padding: 0;
+      }
+
+      .main-drag-region {
+        height: 0;
+        min-height: 0;
+      }
+
+      .chapter-url-chip {
+        top: 4px;
+        right: 8px;
+        background: rgba(255, 255, 255, 0.5);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        color: #1d1d1f;
+      }
+
+      .chapter-url-chip:hover {
+        background: rgba(255, 255, 255, 0.7);
+      }
     }
   </style>
 </head>
@@ -329,12 +474,18 @@
 
   <div class="container">
     <div class="top">
-      <img
-        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkqAcAAIUAgUW0RjgAAAAASUVORK5CYII="
-        id="cover-image" data-tauri-drag-region>
-      <div class="chapter-toc">
-        <div class="chapter-toc-list" data-tauri-drag-region>
+      <div class="chapter-toc" id="sidebar">
+        <div class="sidebar-drag-region" data-tauri-drag-region></div>
+        <div class="chapter-toc-list">
         </div>
+        <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+      </div>
+      <div class="main-content">
+        <div class="main-drag-region" data-tauri-drag-region></div>
+        <a id="chapter-url-chip" class="chapter-url-chip" target="_blank" href="#">Link</a>
+        <img
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg=="
+          id="cover-image">
       </div>
     </div>
     <media-player src="404.mp3" key-target="document">
@@ -343,6 +494,38 @@
       </media-audio-layout>
     </media-player>
   </div>
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const handle = document.getElementById('sidebar-resize-handle');
+    const mainContent = document.querySelector('.main-content');
+    let isResizing = false;
+    function isNarrow() {
+      return window.innerWidth <= 576;
+    }
+    handle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = isNarrow() ? 'row-resize' : 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      if (isNarrow()) {
+        const height = Math.min(Math.max(e.clientY, 50), window.innerHeight * 0.6);
+        mainContent.style.flexBasis = height + 'px';
+      } else {
+        const width = Math.min(Math.max(e.clientX, 180), window.innerWidth * 0.5);
+        sidebar.style.width = width + 'px';
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+  </script>
 </body>
 
 </html>

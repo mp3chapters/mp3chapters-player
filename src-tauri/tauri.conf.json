@@ -32,16 +32,7 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [
-      {
-        "fullscreen": false,
-        "resizable": true,
-        "title": "MP3 Chapter Player",
-        "width": 900,
-        "height": 600,
-        "useHttpsScheme": true
-      }
-    ],
+    "windows": [],
     "security": {
       "assetProtocol": {
         "scope": [

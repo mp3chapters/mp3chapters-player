@@ -251,8 +251,18 @@ export class ChapterList {
 
             const chapterLink = document.createElement('a');
             chapterLink.href = chapter.url;
+            chapterLink.target = '_blank';
             chapterLink.className = 'chapter-toc-item-link';
             chapterLink.textContent = chapter.url;
+            chapterLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (window.__TAURI__ && window.__TAURI__.shell) {
+                    window.__TAURI__.shell.open(chapter.url);
+                } else {
+                    window.open(chapter.url, '_blank');
+                }
+            });
 
             chapterTextDiv.appendChild(chapterTitle);
             chapterTextDiv.appendChild(chapterDuration);

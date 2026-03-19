@@ -248,6 +248,17 @@ export function startUp() {
             img.src = window.coverImg;
             img.style.visibility = "hidden";
         }
+        // show/hide chapter URL chip
+        const chipEl = document.getElementById('chapter-url-chip');
+        if (chipEl) {
+            if (currentChapter && currentChapter.url) {
+                chipEl.href = currentChapter.url;
+                chipEl.innerHTML = currentChapter.url.replace(/^https?:\/\//, '') + ' <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-left: 3px;"><path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5"/><path d="M7 1.5h3.5V5"/><path d="M5.5 6.5L10.5 1.5"/></svg>';
+                chipEl.classList.add('visible');
+            } else {
+                chipEl.classList.remove('visible');
+            }
+        }
         // update chapter list
         const currentVisibleChapter = chapters.visibleChapterAtTime(window.currentTime);
         if (currentVisibleChapter) {

@@ -4,6 +4,8 @@ use tauri::{Emitter, Manager};
 #[cfg(desktop)]
 use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 
+use tauri::{WebviewUrl, WebviewWindowBuilder};
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
@@ -15,6 +17,19 @@ pub fn run() {
     let builder = builder.plugin(tauri_plugin_cli::init());
 
     let builder = builder.setup(|_app| {
+            // Create main window
+            let win_builder = WebviewWindowBuilder::new(_app, "main", WebviewUrl::default())
+                .title("MP3 Chapter Player")
+                .inner_size(900.0, 600.0)
+                .resizable(true);
+
+            #[cfg(target_os = "macos")]
+            let win_builder = win_builder
+                .title_bar_style(tauri::TitleBarStyle::Overlay)
+                .hidden_title(true);
+
+            let _window = win_builder.build()?;
+
             #[cfg(desktop)]
             {
                 let app = _app;
