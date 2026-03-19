@@ -2,7 +2,7 @@ import 'vidstack/player';
 import 'vidstack/player/layouts';
 import 'vidstack/player/ui';
 
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { getMatches } from '@tauri-apps/plugin-cli';
@@ -23,6 +23,7 @@ async function handleMP3FilePath(filePath) {
     } else {
         appWindow.setTitle(fileName);
     }
+    invoke('add_recent_file', { path: filePath });
 }
 
 // Listen for drag-drop events (v2 renamed from file-drop to drag-drop)
@@ -114,6 +115,12 @@ listen('menu-event', async (event) => {
             goToPreviousChapter(player, window.chapters);
             break;
     }
+});
+
+// Listen for recent file open events from Rust
+listen('open-recent-file', async (event) => {
+    const filePath = event.payload;
+    handleMP3FilePath(filePath);
 });
 
 const player = document.querySelector("media-player");

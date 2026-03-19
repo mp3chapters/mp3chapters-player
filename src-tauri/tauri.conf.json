@@ -13,6 +13,14 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["mp3"],
+        "name": "MP3 Audio",
+        "role": "Viewer",
+        "mimeType": "audio/mpeg"
+      }
     ]
   },
   "productName": "MP3 Chapter Player",
