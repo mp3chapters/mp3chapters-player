@@ -2,15 +2,15 @@ import 'vidstack/player';
 import 'vidstack/player/layouts';
 import 'vidstack/player/ui';
 
-import { invoke } from '@tauri-apps/api/tauri';
-import { open } from '@tauri-apps/api/dialog';
-import { appWindow } from "@tauri-apps/api/window";
-import { convertFileSrc } from '@tauri-apps/api/tauri';
-import { getMatches } from '@tauri-apps/api/cli';
+import { convertFileSrc } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { getMatches } from '@tauri-apps/plugin-cli';
 import { listen } from '@tauri-apps/api/event';
 
 import { loadFile } from '@common/FileLoader.js';
 import { startUp, toggleShortcutsPanel, goToNextChapter, goToPreviousChapter, SEEK_SECONDS, SPEED_STEP, MIN_SPEED, MAX_SPEED, VOLUME_STEP } from '@common/Player.js';
+const appWindow = getCurrentWebviewWindow()
 
 async function handleMP3FilePath(filePath) {
     const url = convertFileSrc(filePath);
@@ -25,13 +25,17 @@ async function handleMP3FilePath(filePath) {
     }
 }
 
-listen('tauri://file-drop', event => {
+// Listen for drag-drop events (v2 renamed from file-drop to drag-drop)
+listen('tauri://drag-drop', event => {
     console.log(event);
-    const filesDrop = event.payload;
-    for (let file of filesDrop) {
-        if (file.endsWith('.mp3')) {
-            handleMP3FilePath(file);
-            break;
+    const payload = event.payload;
+    // In v2, payload has { paths: string[], position: { x, y } }
+    if (payload.paths) {
+        for (let file of payload.paths) {
+            if (file.endsWith('.mp3')) {
+                handleMP3FilePath(file);
+                break;
+            }
         }
     }
 });
@@ -51,7 +55,9 @@ async function openFile() {
     }
 }
 
-const unlisten = await appWindow.onMenuClicked(async ({ payload: menuId }) => {
+// Listen for menu events from Rust
+listen('menu-event', async (event) => {
+    const menuId = event.payload;
     console.log('Menu clicked: ' + menuId);
     switch (menuId) {
         case 'open':

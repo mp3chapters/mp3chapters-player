@@ -1,0 +1,23 @@
+{
+  "identifier": "desktop-capability",
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
+  ],
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "cli:default",
+    "dialog:default",
+    "dialog:allow-open",
+    "fs:default",
+    "fs:allow-read",
+    "shell:default",
+    "shell:allow-open",
+    "core:window:default",
+    "core:window:allow-set-title",
+    "core:event:default"
+  ]
+}
