@@ -17,6 +17,8 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       box-sizing: border-box;
       color: #1d1d1f;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     body {
@@ -24,7 +26,7 @@
       margin: 0;
       --player-height: 72px;
       --sidebar-width: 240px;
-      --titlebar-height: 52px;
+      --titlebar-height: 24px;
     }
 
     .container {
@@ -189,6 +191,7 @@
       min-width: 0;
       background-color: #ececec;
       position: relative;
+      cursor: default;
     }
 
     .filename-chip {
@@ -207,7 +210,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      -webkit-app-region: drag;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .filename-chip.visible {
@@ -283,12 +287,6 @@
       color: #777;
       margin-bottom: 4px;
       word-break: break-word;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      #file-info-display { color: #ccc; }
-      #file-info-artist, #file-info-album { color: #999; }
-      .filename-chip { background: rgba(255, 255, 255, 0.12); color: #ccc; }
     }
 
     /* Player bar */
@@ -480,6 +478,8 @@
       outline: none;
       box-sizing: border-box;
       color: #1d1d1f;
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     .podcast-search input::placeholder {
@@ -697,6 +697,8 @@
       color: #555;
       line-height: 1.5;
       white-space: pre-wrap;
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     .podcast-powered-by {
@@ -725,6 +727,230 @@
 
     .podcast-status:empty {
       display: none;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      html, body {
+        background-color: #323232;
+        color: #e5e5e5;
+        color-scheme: dark;
+      }
+
+      /* Sidebar */
+      .chapter-toc {
+        background-color: #2a2a2a;
+        border-right-color: #1a1a1a;
+      }
+
+      .chapter-toc-item {
+        color: #e5e5e5;
+        --toc-progress-color: rgba(255, 255, 255, 0.06);
+      }
+
+      .chapter-toc-item:hover {
+        --toc-item-background-color: rgba(255, 255, 255, 0.08);
+        --toc-progress-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .chapter-toc-item:active {
+        --toc-item-background-color: rgba(255, 255, 255, 0.14);
+      }
+
+      .chapter-toc-item.current-toc-item:hover {
+        --toc-item-background-color: rgba(255, 255, 255, 0.06);
+        --toc-progress-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .chapter-toc-item.current-toc-item:active {
+        --toc-item-background-color: rgba(255, 255, 255, 0.18);
+      }
+
+      div.chapter-toc-image {
+        background-color: rgba(255, 255, 255, 0.08);
+        color: #888;
+      }
+
+      .chapter-toc-item-time {
+        background: rgba(255, 255, 255, 0.1);
+        color: #aaa;
+      }
+
+      .chapter-toc-item-duration {
+        color: #888;
+      }
+
+      .chapter-toc-item-link {
+        color: #4da3ff;
+      }
+
+      /* Main content */
+      .main-content {
+        background-color: #323232;
+      }
+
+      .filename-chip {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ccc;
+      }
+
+      .chapter-url-chip {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ccc;
+      }
+
+      .chapter-url-chip:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      #file-info-display { color: #ccc; }
+      #file-info-artist, #file-info-album { color: #999; }
+
+      /* Player bar */
+      media-player {
+        border-top-color: #1a1a1a;
+        background: #2a2a2a;
+        --media-brand: #ccc;
+        --media-controls-color: #ddd;
+        --media-button-color: #ddd;
+        --media-button-hover-bg: rgba(255, 255, 255, 0.1);
+        --media-button-touch-hover-bg: rgba(255, 255, 255, 0.1);
+        --media-chapter-title-color: rgba(255, 255, 255, 0.5);
+        --media-slider-track-bg: rgba(255, 255, 255, 0.2);
+        --media-slider-track-fill-bg: #e5e5e5;
+        --audio-bg: #2a2a2a;
+        --audio-controls-color: #ddd;
+        --audio-brand: #ccc;
+        color: #e5e5e5;
+      }
+
+      .vds-slider-chapter-title {
+        background-color: #3a3a3a;
+        color: #ccc;
+      }
+
+      /* Shortcuts panel */
+      .shortcuts-content {
+        background: #323232;
+        border-color: #1a1a1a;
+      }
+
+      .shortcuts-header {
+        border-bottom-color: #444;
+      }
+
+      .shortcuts-header h2 {
+        color: #e5e5e5;
+      }
+
+      .shortcuts-close {
+        color: #888;
+      }
+
+      .shortcuts-close:hover {
+        background: #3a3a3a;
+        color: #ccc;
+      }
+
+      .shortcut-row {
+        color: #ccc;
+      }
+
+      .shortcut-row span {
+        color: #999;
+      }
+
+      kbd {
+        background: #3a3a3a;
+        border-color: #555;
+        color: #ccc;
+      }
+
+      /* Podcast browser panel */
+      .podcast-content {
+        background: #2a2a2a;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-search {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-search input {
+        color: #e5e5e5;
+      }
+
+      .podcast-search input::placeholder {
+        color: #777;
+      }
+
+      .podcast-nav-bar {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-nav-bar button {
+        color: #999;
+      }
+
+      .podcast-nav-bar button:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ccc;
+      }
+
+      .podcast-nav-title {
+        color: #ccc;
+      }
+
+      .podcast-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .podcast-item:active {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .podcast-item-title {
+        color: #e5e5e5;
+      }
+
+      .podcast-item .podcast-item-remove {
+        color: #777;
+      }
+
+      .podcast-item .podcast-item-remove:hover {
+        color: #ccc;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-item-info {
+        color: #777;
+      }
+
+      .podcast-item-info:hover {
+        color: #ccc;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-episode-detail-title {
+        color: #e5e5e5;
+      }
+
+      .podcast-episode-detail-play {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e5e5e5;
+      }
+
+      .podcast-episode-detail-play:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .podcast-episode-detail-play:active {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .podcast-episode-detail-desc {
+        color: #aaa;
+      }
     }
 
     /* Vertical layout for narrow windows */
@@ -793,6 +1019,26 @@
 
       .chapter-url-chip:hover {
         background: rgba(255, 255, 255, 0.7);
+      }
+    }
+
+    @media (max-width: 576px) and (prefers-color-scheme: dark) {
+      .chapter-toc {
+        border-bottom-color: #1a1a1a;
+      }
+
+      .filename-chip {
+        background: rgba(0, 0, 0, 0.4);
+        color: #ccc;
+      }
+
+      .chapter-url-chip {
+        background: rgba(0, 0, 0, 0.4);
+        color: #ccc;
+      }
+
+      .chapter-url-chip:hover {
+        background: rgba(0, 0, 0, 0.55);
       }
     }
   </style>
@@ -867,14 +1113,15 @@
         </div>
         <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
       </div>
-      <div class="main-content">
+      <div class="main-content" data-tauri-drag-region>
         <div class="main-drag-region" data-tauri-drag-region></div>
-        <div id="filename-chip" class="filename-chip"></div>
+        <div id="filename-chip" class="filename-chip" data-tauri-drag-region></div>
         <a id="chapter-url-chip" class="chapter-url-chip" target="_blank" href="#">Link</a>
         <img
           src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg=="
-          id="cover-image">
-        <div id="file-info-display" style="display:none;">
+          id="cover-image"
+          data-tauri-drag-region>
+        <div id="file-info-display" style="display:none;" data-tauri-drag-region>
           <div id="file-info-title"></div>
           <div id="file-info-artist"></div>
           <div id="file-info-album"></div>
