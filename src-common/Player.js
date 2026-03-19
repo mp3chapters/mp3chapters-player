@@ -234,6 +234,7 @@ export function startUp() {
         const currentChapter = chapters.chapterAtTime(window.currentTime);
         // show image if chapter has one
         const img = document.getElementById('cover-image');
+        const fileInfoDisplay = document.getElementById('file-info-display');
         if (currentChapter && currentChapter.hasOwnProperty('imageId')) {
             if (currentChapter.imageId !== displayedImage) {
                 displayedImage = currentChapter.imageId;
@@ -241,12 +242,22 @@ export function startUp() {
                 const blob = new Blob([image.imageBuffer], { type: image.mime });
                 const url = URL.createObjectURL(blob);
                 img.src = url;
+                img.style.display = '';
                 img.style.visibility = "visible";
+                fileInfoDisplay.style.display = 'none';
             }
         } else if (displayedImage !== -1) {
             displayedImage = -1;
             img.src = window.coverImg;
-            img.style.visibility = "hidden";
+            if (window.hasCoverArt) {
+                img.style.display = '';
+                img.style.visibility = "visible";
+                fileInfoDisplay.style.display = 'none';
+            } else {
+                img.style.display = 'none';
+                img.style.visibility = "hidden";
+                fileInfoDisplay.style.display = '';
+            }
         }
         // show/hide chapter URL chip
         const chipEl = document.getElementById('chapter-url-chip');

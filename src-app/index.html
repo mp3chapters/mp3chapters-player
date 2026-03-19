@@ -191,10 +191,33 @@
       position: relative;
     }
 
-    .chapter-url-chip {
+    .filename-chip {
       display: none;
       position: absolute;
       top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.08);
+      color: #333;
+      font-size: 0.75em;
+      padding: 4px 10px;
+      border-radius: 12px;
+      max-width: 70%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      -webkit-app-region: drag;
+    }
+
+    .filename-chip.visible {
+      display: block;
+    }
+
+    .chapter-url-chip {
+      display: none;
+      position: absolute;
+      bottom: 16px;
       right: 16px;
       z-index: 10;
       background: rgba(0, 0, 0, 0.08);
@@ -231,6 +254,41 @@
       width: 100%;
       padding: 16px;
       box-sizing: border-box;
+    }
+
+    #file-info-display {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      padding: 32px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #444;
+      overflow: hidden;
+    }
+
+    #file-info-title {
+      font-size: 1.4em;
+      font-weight: 600;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    #file-info-artist, #file-info-album {
+      font-size: 1.1em;
+      color: #777;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #file-info-display { color: #ccc; }
+      #file-info-artist, #file-info-album { color: #999; }
+      .filename-chip { background: rgba(255, 255, 255, 0.12); color: #ccc; }
     }
 
     /* Player bar */
@@ -364,6 +422,311 @@
       text-align: center;
       display: inline-block;
     }
+    /* Podcast Browser Panel */
+    .podcast-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: min(15vh, 100px);
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.15s ease;
+    }
+
+    .podcast-panel.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .podcast-content {
+      background: #f0efed;
+      border-radius: 10px;
+      width: 90vw;
+      max-width: 560px;
+      max-height: 65vh;
+      display: flex;
+      flex-direction: column;
+      border: 0.5px solid rgba(0, 0, 0, 0.15);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .podcast-search {
+      padding: 10px 12px;
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .podcast-search-icon {
+      color: #999;
+      flex-shrink: 0;
+    }
+
+    .podcast-search input {
+      width: 100%;
+      padding: 0;
+      border: none;
+      background: transparent;
+      font-size: 1.05em;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+      color: #1d1d1f;
+    }
+
+    .podcast-search input::placeholder {
+      color: #999;
+    }
+
+    .podcast-nav-bar {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+      gap: 6px;
+    }
+
+    .podcast-nav-bar button {
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      font-size: 0.8em;
+      font-family: inherit;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .podcast-nav-bar button:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: #333;
+    }
+
+    .podcast-nav-title {
+      font-size: 0.8em;
+      font-weight: 500;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .podcast-section-label {
+      padding: 8px 16px 4px;
+      font-size: 0.7em;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .podcast-list {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding: 4px 6px;
+    }
+
+    .podcast-item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      gap: 10px;
+    }
+
+    .podcast-item:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .podcast-item:active {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .podcast-item img {
+      width: 36px;
+      height: 36px;
+      border-radius: 5px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .podcast-episode-item img {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+    }
+
+    .podcast-item-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .podcast-item-title {
+      font-size: 0.85em;
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #1d1d1f;
+    }
+
+    .podcast-item-author {
+      font-size: 0.75em;
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .podcast-item .podcast-item-remove {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 1.1em;
+      padding: 2px 4px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .podcast-item:hover .podcast-item-remove {
+      opacity: 1;
+    }
+
+    .podcast-item .podcast-item-remove:hover {
+      color: #666;
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .podcast-item-info {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .podcast-item:hover .podcast-item-info {
+      opacity: 1;
+    }
+
+    .podcast-item-info:hover {
+      color: #666;
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .podcast-episode-detail {
+      padding: 12px 16px;
+    }
+
+    .podcast-episode-detail-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .podcast-episode-detail-header img {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .podcast-episode-detail-header-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .podcast-episode-detail-title {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 4px;
+    }
+
+    .podcast-episode-detail-play {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.08);
+      color: #1d1d1f;
+      font-size: 0.85em;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+
+    .podcast-episode-detail-play:hover {
+      background: rgba(0, 0, 0, 0.13);
+    }
+
+    .podcast-episode-detail-play:active {
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .podcast-episode-detail-meta {
+      font-size: 0.75em;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .podcast-episode-detail-desc {
+      font-size: 0.8em;
+      color: #555;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .podcast-powered-by {
+      text-align: center;
+      font-size: 0.7em;
+      color: #aaa;
+      padding: 12px 0;
+    }
+
+    .podcast-powered-by a {
+      color: #999;
+      text-decoration: none;
+    }
+
+    .podcast-powered-by a:hover {
+      text-decoration: underline;
+      color: #666;
+    }
+
+    .podcast-status {
+      text-align: center;
+      color: #888;
+      font-size: 0.8em;
+      padding: 10px 0;
+    }
+
+    .podcast-status:empty {
+      display: none;
+    }
+
     /* Vertical layout for narrow windows */
     @media (max-width: 576px) {
       .top {
@@ -411,8 +774,16 @@
         min-height: 0;
       }
 
-      .chapter-url-chip {
+      .filename-chip {
         top: 4px;
+        background: rgba(255, 255, 255, 0.5);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        color: #1d1d1f;
+      }
+
+      .chapter-url-chip {
+        bottom: 4px;
         right: 8px;
         background: rgba(255, 255, 255, 0.5);
         -webkit-backdrop-filter: blur(10px);
@@ -472,6 +843,22 @@
     </div>
   </div>
 
+  <!-- Podcast Browser Panel -->
+  <div id="podcast-panel" class="podcast-panel hidden">
+    <div class="podcast-content">
+      <div class="podcast-search">
+        <svg class="podcast-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="podcast-search-input" placeholder="Search podcasts…" />
+      </div>
+      <div id="podcast-nav-bar" class="podcast-nav-bar" style="display:none">
+        <button id="podcast-back-btn">‹</button>
+        <span id="podcast-nav-title" class="podcast-nav-title"></span>
+      </div>
+      <div id="podcast-list" class="podcast-list"></div>
+      <div id="podcast-status" class="podcast-status"></div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="top">
       <div class="chapter-toc" id="sidebar">
@@ -482,10 +869,16 @@
       </div>
       <div class="main-content">
         <div class="main-drag-region" data-tauri-drag-region></div>
+        <div id="filename-chip" class="filename-chip"></div>
         <a id="chapter-url-chip" class="chapter-url-chip" target="_blank" href="#">Link</a>
         <img
           src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg=="
           id="cover-image">
+        <div id="file-info-display" style="display:none;">
+          <div id="file-info-title"></div>
+          <div id="file-info-artist"></div>
+          <div id="file-info-album"></div>
+        </div>
       </div>
     </div>
     <media-player src="404.mp3" key-target="document">

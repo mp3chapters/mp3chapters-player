@@ -90,12 +90,26 @@ export async function loadFile(player, url) {
     }
 
     const img = document.getElementById('cover-image');
+    const fileInfoDisplay = document.getElementById('file-info-display');
     if (tags.hasOwnProperty('image')) {
         const blob = new Blob([tags.image.imageBuffer], { type: tags.image.mime });
         const url = URL.createObjectURL(blob);
         img.src = url;
+        img.style.display = '';
+        fileInfoDisplay.style.display = 'none';
+        window.hasCoverArt = true;
     } else {
         img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg==";
+        img.style.display = 'none';
+        // Show text info instead
+        const title = tags.title || window.currentFilename || '';
+        const artist = tags.artist || '';
+        const album = tags.album || '';
+        document.getElementById('file-info-title').textContent = title;
+        document.getElementById('file-info-artist').textContent = artist;
+        document.getElementById('file-info-album').textContent = album;
+        fileInfoDisplay.style.display = '';
+        window.hasCoverArt = false;
     }
     window.coverImg = img.src;
 

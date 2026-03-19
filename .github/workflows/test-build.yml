@@ -30,7 +30,12 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: install frontend dependencies
-        run: npm install # change this to npm or pnpm depending on which one you use
+        run: npm install
+
+      - name: write podcast index secret
+        run: |
+          echo "Key: ${{ secrets.PODCAST_INDEX_KEY }}" > src-app/podcast-index-secret.txt
+          echo "Secret: ${{ secrets.PODCAST_INDEX_SECRET }}" >> src-app/podcast-index-secret.txt
 
       # If tagName and releaseId are omitted tauri-action will only build the app and won't try to upload any asstes.
       - uses: tauri-apps/tauri-action@v0

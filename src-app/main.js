@@ -10,6 +10,7 @@ import { listen } from '@tauri-apps/api/event';
 
 import { loadFile } from '@common/FileLoader.js';
 import { startUp, toggleShortcutsPanel, goToNextChapter, goToPreviousChapter, SEEK_SECONDS, SPEED_STEP, MIN_SPEED, MAX_SPEED, VOLUME_STEP } from '@common/Player.js';
+import { initPodcastBrowser, togglePodcastPanel } from './PodcastBrowser.js';
 const appWindow = getCurrentWebviewWindow()
 
 async function handleMP3FilePath(filePath) {
@@ -17,12 +18,13 @@ async function handleMP3FilePath(filePath) {
     console.log("Opening file: " + url);
     player.src = { src: url, type: 'audio/mpeg' };
     const fileName = filePath.split('\\').pop().split('/').pop();
+    window.currentFilename = fileName;
     const { id3Title } = await loadFile(player, url);
-    if (id3Title) {
-        appWindow.setTitle(`${id3Title} [${fileName}]`);
-    } else {
-        appWindow.setTitle(fileName);
-    }
+    const displayName = id3Title ? `${id3Title} [${fileName}]` : fileName;
+    appWindow.setTitle(displayName);
+    const filenameChip = document.getElementById('filename-chip');
+    filenameChip.textContent = displayName;
+    filenameChip.classList.add('visible');
     invoke('add_recent_file', { path: filePath });
 }
 
@@ -63,6 +65,9 @@ listen('menu-event', async (event) => {
     switch (menuId) {
         case 'open':
             openFile();
+            break;
+        case 'open_podcast':
+            togglePodcastPanel();
             break;
         case 'keyboard_shortcuts':
             toggleShortcutsPanel();
@@ -126,6 +131,8 @@ listen('open-recent-file', async (event) => {
 const player = document.querySelector("media-player");
 
 startUp();
+initPodcastBrowser(handleMP3FilePath);
+window.togglePodcastPanel = togglePodcastPanel;
 
 // reading arguments from the command line
 getMatches().then((matches) => {
