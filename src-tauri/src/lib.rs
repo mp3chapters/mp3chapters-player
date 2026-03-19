@@ -278,7 +278,14 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             let win_builder = win_builder
                 .title_bar_style(tauri::TitleBarStyle::Overlay)
-                .hidden_title(true);
+                .hidden_title(true)
+                .transparent(true)
+                .effects(tauri::utils::config::WindowEffectsConfig {
+                    effects: vec![tauri::utils::WindowEffect::Sidebar],
+                    state: None,
+                    radius: None,
+                    color: None,
+                });
 
             let _window = win_builder.build()?;
 

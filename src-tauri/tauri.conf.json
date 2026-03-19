@@ -39,6 +39,7 @@
     }
   },
   "app": {
+    "macOSPrivateApi": true,
     "withGlobalTauri": true,
     "windows": [],
     "security": {
