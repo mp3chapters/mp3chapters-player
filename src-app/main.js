@@ -4,6 +4,7 @@ import 'vidstack/player/ui';
 
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
+import { readFile } from '@tauri-apps/plugin-fs';
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { getMatches } from '@tauri-apps/plugin-cli';
 import { listen } from '@tauri-apps/api/event';
@@ -14,7 +15,17 @@ import { initPodcastBrowser, togglePodcastPanel } from './PodcastBrowser.js';
 const appWindow = getCurrentWebviewWindow()
 
 async function handleMP3FilePath(filePath) {
-    const url = convertFileSrc(filePath);
+    let url;
+    const isFileUri = filePath.startsWith('file://');
+    if (isFileUri) {
+        // On mobile, the dialog returns file:// URIs which the asset protocol can't handle;
+        // read via fs plugin and create a blob URL instead
+        const contents = await readFile(filePath);
+        const blob = new Blob([contents], { type: 'audio/mpeg' });
+        url = URL.createObjectURL(blob);
+    } else {
+        url = convertFileSrc(filePath);
+    }
     console.log("Opening file: " + url);
     player.src = { src: url, type: 'audio/mpeg' };
     const fileName = filePath.split('\\').pop().split('/').pop();
@@ -26,7 +37,9 @@ async function handleMP3FilePath(filePath) {
     filenameChip.textContent = displayName;
     filenameChip.classList.add('visible');
     document.getElementById('welcome-screen')?.classList.add('hidden');
-    invoke('add_recent_file', { path: filePath });
+    if (!isFileUri) {
+        invoke('add_recent_file', { path: filePath });
+    }
 }
 
 // Listen for drag-drop events (v2 renamed from file-drop to drag-drop)

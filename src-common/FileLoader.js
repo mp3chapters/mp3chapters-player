@@ -113,9 +113,21 @@ export async function loadFile(player, url) {
     }
     window.coverImg = img.src;
 
-    // buildGallery();
-
-    // document.getElementById('filename').innerText = file.name;
+    // Set Media Session metadata for lock screen / control center
+    if ('mediaSession' in navigator) {
+        const artwork = [];
+        if (tags.hasOwnProperty('image')) {
+            const artBlob = new Blob([tags.image.imageBuffer], { type: tags.image.mime });
+            const artUrl = URL.createObjectURL(artBlob);
+            artwork.push({ src: artUrl, type: tags.image.mime });
+        }
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: tags.title || window.currentFilename || '',
+            artist: tags.artist || '',
+            album: tags.album || '',
+            artwork,
+        });
+    }
 
     // Return the ID3 title for use by callers (e.g., setting window title)
     return { id3Title: window.id3Title };
