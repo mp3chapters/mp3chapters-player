@@ -199,6 +199,22 @@ export function startUp() {
     // Set up keyboard shortcuts for playback control
     setupKeyboardShortcuts(player, chapters);
 
+    // Set up Media Session action handlers for lock screen / control center
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => player.play());
+        navigator.mediaSession.setActionHandler('pause', () => player.pause());
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+            goToPreviousChapter(player, chapters);
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            goToNextChapter(player, chapters);
+        });
+        // Explicitly unset seek handlers so iOS shows skip track buttons
+        // instead of ±10s scrub buttons in the Control Center
+        navigator.mediaSession.setActionHandler('seekbackward', null);
+        navigator.mediaSession.setActionHandler('seekforward', null);
+    }
+
     setTimeout(() => {
         document.querySelector("media-play-button").disabled = true;
         document.querySelector("media-time-slider").disabled = true;
@@ -226,6 +242,7 @@ export function startUp() {
     });
     
     let displayedImage = -1;
+    let displayedChapterIndex = -1;
     player.addEventListener('time-update', (e) => {
         window.currentTime = e.detail.currentTime * 1000;
         if (chapters.duration != player.state.duration) {
@@ -257,6 +274,31 @@ export function startUp() {
                 img.style.display = 'none';
                 img.style.visibility = "hidden";
                 fileInfoDisplay.style.display = '';
+            }
+        }
+        // Update media session metadata with current chapter info
+        if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+            const visibleChapter = chapters.visibleChapterAtTime(window.currentTime);
+            const chapterIndex = visibleChapter ? visibleChapter.chapterIndex : -1;
+            if (chapterIndex !== displayedChapterIndex) {
+                displayedChapterIndex = chapterIndex;
+                const meta = navigator.mediaSession.metadata;
+                if (visibleChapter && visibleChapter.title) {
+                    meta.title = visibleChapter.title;
+                } else {
+                    meta.title = window.id3Title || window.currentFilename || '';
+                }
+                // Update artwork if chapter has its own image
+                if (visibleChapter && visibleChapter.hasOwnProperty('imageId')) {
+                    const image = window.chapterImages[visibleChapter.imageId];
+                    const blob = new Blob([image.imageBuffer], { type: image.mime });
+                    const artUrl = URL.createObjectURL(blob);
+                    meta.artwork = [{ src: artUrl, type: image.mime }];
+                } else if (window.coverImg && window.hasCoverArt) {
+                    meta.artwork = [{ src: window.coverImg }];
+                } else {
+                    meta.artwork = [];
+                }
             }
         }
         // show/hide chapter URL chip

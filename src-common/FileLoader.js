@@ -124,7 +124,7 @@ export async function loadFile(player, url) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: tags.title || window.currentFilename || '',
             artist: tags.artist || '',
-            album: tags.album || '',
+            album: tags.title || window.currentFilename || '',
             artwork,
         });
     }
