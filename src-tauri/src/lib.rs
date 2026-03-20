@@ -270,7 +270,10 @@ pub fn run() {
 
     let builder = builder.setup(|_app| {
             // Create main window
-            let win_builder = WebviewWindowBuilder::new(_app, "main", WebviewUrl::default())
+            let win_builder = WebviewWindowBuilder::new(_app, "main", WebviewUrl::default());
+
+            #[cfg(desktop)]
+            let win_builder = win_builder
                 .title("MP3 Chapter Player")
                 .inner_size(900.0, 600.0)
                 .resizable(true);

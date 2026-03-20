@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <!-- <link rel="stylesheet" href="styles.css" /> -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>MP3 Chapter Player</title>
   <script type="module" src="dist/main.js"></script>
   <link rel="stylesheet" href="/vidstack/theme.min.css" />
@@ -24,6 +24,10 @@
     body {
       padding: 0;
       margin: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
       --player-height: 72px;
       --sidebar-width: 240px;
       --titlebar-height: 24px;
@@ -32,8 +36,14 @@
     .container {
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      flex: 1;
+      min-height: 0;
       margin: 0;
+      padding-top: env(safe-area-inset-top);
+    }
+
+    :where([data-can-seek] .vds-audio-layout[data-size=sm] .vds-controls-group:last-child) {
+      margin-bottom: calc(max(env(safe-area-inset-bottom) - 8px, 8px));
     }
 
     .top {
@@ -194,6 +204,61 @@
       cursor: default;
     }
 
+    /* Welcome screen (empty state) */
+    .welcome-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      inset: 0;
+      gap: 16px;
+      z-index: 5;
+    }
+
+    .welcome-screen.hidden {
+      display: none;
+    }
+
+    .welcome-hint {
+      font-size: 0.85em;
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .welcome-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .welcome-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.6);
+      color: #333;
+      font-size: 0.85em;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .welcome-btn:hover {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .welcome-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .filename-chip {
       display: none;
       position: absolute;
@@ -294,6 +359,7 @@
       border: 0;
       border-top: 1px solid rgba(0, 0, 0, 0.1);
       background: rgba(246, 246, 246, 0.7);
+
       --media-brand: #333;
       --media-focus-ring-color: #0066cc;
       --media-controls-color: hsl(300, 3%, 20%);
@@ -804,6 +870,16 @@
         background: rgba(255, 255, 255, 0.18);
       }
 
+      .welcome-hint { color: #777; }
+      .welcome-btn {
+        border-color: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.08);
+        color: #ccc;
+      }
+      .welcome-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
       #file-info-display { color: #ccc; }
       #file-info-artist, #file-info-album { color: #999; }
 
@@ -1117,6 +1193,19 @@
       </div>
       <div class="main-content" data-tauri-drag-region>
         <div class="main-drag-region" data-tauri-drag-region></div>
+        <div id="welcome-screen" class="welcome-screen" data-tauri-drag-region>
+          <div class="welcome-hint">Drop an audio file here, or</div>
+          <div class="welcome-buttons">
+            <button class="welcome-btn" id="welcome-open-file">
+              <svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+              Open File
+            </button>
+            <button class="welcome-btn" id="welcome-open-podcast">
+              <svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 00-9 9v7a3 3 0 003 3h2a1 1 0 001-1v-6a1 1 0 00-1-1H6v-2a6 6 0 1112 0v2h-2a1 1 0 00-1 1v6a1 1 0 001 1h2a3 3 0 003-3v-7a9 9 0 00-9-9z"/></svg>
+              Browse Podcasts
+            </button>
+          </div>
+        </div>
         <div id="filename-chip" class="filename-chip" data-tauri-drag-region></div>
         <a id="chapter-url-chip" class="chapter-url-chip" target="_blank" href="#">Link</a>
         <img

@@ -25,6 +25,7 @@ async function handleMP3FilePath(filePath) {
     const filenameChip = document.getElementById('filename-chip');
     filenameChip.textContent = displayName;
     filenameChip.classList.add('visible');
+    document.getElementById('welcome-screen')?.classList.add('hidden');
     invoke('add_recent_file', { path: filePath });
 }
 
@@ -132,6 +133,10 @@ const player = document.querySelector("media-player");
 
 startUp();
 initPodcastBrowser(handleMP3FilePath);
+
+// Welcome screen buttons
+document.getElementById('welcome-open-file')?.addEventListener('click', () => openFile());
+document.getElementById('welcome-open-podcast')?.addEventListener('click', () => togglePodcastPanel());
 window.togglePodcastPanel = togglePodcastPanel;
 
 // reading arguments from the command line
