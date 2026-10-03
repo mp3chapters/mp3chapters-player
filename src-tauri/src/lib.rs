@@ -13,32 +13,6 @@ use std::sync::Mutex;
 const MAX_RECENT_FILES: usize = 10;
 
 #[tauri::command]
-async fn podcast_api_request(url: String, auth_key: String, secret_key: String) -> Result<serde_json::Value, String> {
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| e.to_string())?
-        .as_secs()
-        .to_string();
-
-    let hash_input = format!("{}{}{}", auth_key, secret_key, timestamp);
-    let hash = sha1_smol::Sha1::from(&hash_input).digest().to_string();
-
-    let client = reqwest::Client::new();
-    let response = client
-        .get(&url)
-        .header("X-Auth-Key", &auth_key)
-        .header("X-Auth-Date", &timestamp)
-        .header("Authorization", &hash)
-        .header("User-Agent", "MP3ChapterPlayer/1.0")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    let json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
-    Ok(json)
-}
-
-#[tauri::command]
 async fn download_file(app: tauri::AppHandle, url: String, dest: String) -> Result<(), String> {
     use futures_util::StreamExt;
 
@@ -266,7 +240,7 @@ pub fn run() {
     let builder = builder.plugin(tauri_plugin_cli::init());
 
     #[cfg(desktop)]
-    let builder = builder.invoke_handler(tauri::generate_handler![add_recent_file, get_recent_files, podcast_api_request, download_file]);
+    let builder = builder.invoke_handler(tauri::generate_handler![add_recent_file, get_recent_files, download_file]);
 
     let builder = builder.setup(|_app| {
             // Create main window

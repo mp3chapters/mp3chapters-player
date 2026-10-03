@@ -4,10 +4,11 @@
   "version": "0.4.0",
   "type": "module",
   "scripts": {
-    "tauri": "webpack --config webpack.tauri.config.js && tauri",
+    "tauri": "tauri",
+    "build-app": "webpack --config webpack.tauri.config.js",
     "web": "webpack serve --config webpack.web.config.js --open",
     "build-web": "webpack --config webpack.web.config.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js worker/tests/*.test.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",

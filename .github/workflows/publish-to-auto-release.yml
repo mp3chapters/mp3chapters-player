@@ -38,14 +38,10 @@ jobs:
       - name: install frontend dependencies
         run: npm install
 
-      - name: write podcast index secret
-        run: |
-          echo "Key: ${{ secrets.PODCAST_INDEX_KEY }}" > src-app/podcast-index-secret.txt
-          echo "Secret: ${{ secrets.PODCAST_INDEX_SECRET }}" >> src-app/podcast-index-secret.txt
-
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PODCAST_PROXY_URL: ${{ vars.PODCAST_PROXY_URL }}
         with:
           tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
           releaseName: "App v__VERSION__"

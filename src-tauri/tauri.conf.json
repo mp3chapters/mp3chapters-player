@@ -1,8 +1,8 @@
 {
   "build": {
-    "beforeDevCommand": "webpack --config webpack.tauri.config.js",
-    "beforeBuildCommand": "",
-    "frontendDist": "../src-app"
+    "beforeDevCommand": "npm run build-app",
+    "beforeBuildCommand": "npm run build-app",
+    "frontendDist": "../dist-app"
   },
   "bundle": {
     "active": true,
@@ -55,7 +55,7 @@
         ],
         "enable": true
       },
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: http://asset.localhost https://asset.localhost https: data: blob:; media-src 'self' asset: http://asset.localhost https://asset.localhost blob:; connect-src 'self' ipc: http://ipc.localhost asset: http://asset.localhost https://asset.localhost https: http://127.0.0.1:8787 http://localhost:8787; font-src 'self' data:; object-src 'none'; base-uri 'none'"
     }
   }
 }

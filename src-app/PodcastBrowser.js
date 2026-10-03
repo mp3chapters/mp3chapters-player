@@ -2,14 +2,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { appDataDir, join } from '@tauri-apps/api/path';
 import { mkdir, exists } from '@tauri-apps/plugin-fs';
 import { listen } from '@tauri-apps/api/event';
+import { createPodcastApi } from './PodcastApi.js';
+import { openExternalUrl } from '@common/Links.js';
 
-/* global __PODCAST_KEY_OBF__, __PODCAST_SECRET_OBF__, __PODCAST_XOR_KEY__ */
-
-function deobfuscate(obf, key) {
-    return obf.map((c, i) => String.fromCharCode(c ^ key.charCodeAt(i % key.length))).join('');
-}
-
-const BASE_URL = 'https://api.podcastindex.org/api/1.0';
+/* global __PODCAST_PROXY_URL__ */
+const apiRequest = createPodcastApi(__PODCAST_PROXY_URL__);
 const MAX_RECENT_PODCASTS = 8;
 const STORAGE_KEY = 'recentPodcasts';
 
@@ -47,16 +44,6 @@ function removeRecentPodcast(podcastId) {
 }
 
 // --- API ---
-
-async function apiRequest(endpoint, params = {}) {
-    const query = new URLSearchParams(params).toString();
-    const url = `${BASE_URL}${endpoint}${query ? '?' + query : ''}`;
-    return invoke('podcast_api_request', {
-        url,
-        authKey: deobfuscate(__PODCAST_KEY_OBF__, __PODCAST_XOR_KEY__),
-        secretKey: deobfuscate(__PODCAST_SECRET_OBF__, __PODCAST_XOR_KEY__),
-    });
-}
 
 // --- DOM helpers ---
 
@@ -152,10 +139,8 @@ function renderRecentPodcasts() {
     powered.className = 'podcast-powered-by';
     powered.innerHTML = 'Powered by <a href="https://podcastindex.org/" target="_blank">Podcast Index</a>';
     powered.querySelector('a').addEventListener('click', (e) => {
-        if (window.__TAURI__) {
-            e.preventDefault();
-            window.__TAURI__.shell.open('https://podcastindex.org/');
-        }
+        e.preventDefault();
+        openExternalUrl('https://podcastindex.org/').catch(console.error);
     });
     list.appendChild(powered);
 }
@@ -355,9 +340,8 @@ function renderEpisodeDetail() {
         const descEl = document.createElement('div');
         descEl.className = 'podcast-episode-detail-desc';
         // Strip HTML tags for safety, render as text
-        const tmp = document.createElement('div');
-        tmp.innerHTML = ep.description;
-        descEl.textContent = tmp.textContent;
+        const parsed = new DOMParser().parseFromString(ep.description, 'text/html');
+        descEl.textContent = parsed.body.textContent;
         detail.appendChild(descEl);
     }
 
@@ -384,7 +368,7 @@ async function searchPodcasts(query) {
         }
     } catch (e) {
         console.error('Podcast search error:', e);
-        getStatus().textContent = 'Search failed.';
+        getStatus().textContent = e.message || 'Search failed.';
     }
 }
 

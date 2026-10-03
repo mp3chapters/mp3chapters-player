@@ -131,3 +131,8 @@ dist
 /tauri-docs
 /.claude
 podcast-index-secret.txt
+/dist-app/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
