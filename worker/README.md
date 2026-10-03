@@ -10,6 +10,22 @@ Run `npm test` from the repository root. The Worker tests use Node's built-in te
 runner, Web Crypto, and simulated HTTP responses. They never contact Podcast
 Index or Cloudflare and need no Wrangler installation.
 
+## Prepare with the installed cf CLI
+
+`cf` v1.0.0-beta.12 is installed locally. It uses Cloudflare Build Output rather
+than reading `wrangler.jsonc` directly. Prepare and validate that output without
+installing a bundler or contacting the deployment API:
+
+```sh
+npm run build-worker
+cd worker
+cf deploy --prebuilt --dry-run
+```
+
+The dependency-free build script copies only the Worker module and declares its
+bindings in ignored `.cloudflare/output/v0/`. It never reads credential files.
+The output format is currently a beta; rerun the dry run after upgrading `cf`.
+
 ## Deploy later
 
 Use the Cloudflare dashboard to create the `mp3chapters-podcast-proxy` Worker and
@@ -23,15 +39,18 @@ for an unrelated limiter on your account. The Worker returns 503 if any required
 binding is missing. `wrangler.jsonc` describes the same deployment for use with
 Wrangler when downloading it is convenient; it contains no credentials.
 
-The corresponding CLI steps, **only after installing Wrangler**, are:
+With `cf` already authenticated, deploy the prepared output using a local secret
+file. Copy `.dev.vars.example` to `.dev.vars` (ignored by Git) and enter the new
+credentials there. From `worker/`, run:
 
 ```sh
-cd worker
-wrangler login
-wrangler secret put PODCAST_API_KEY
-wrangler secret put PODCAST_API_SECRET
-wrangler deploy
+cf deploy --prebuilt --secrets-file .dev.vars
 ```
+
+This is the step that uploads credentials and publishes the Worker. Rebuild with
+`npm run build-worker` from the repository root after changing the module or
+configuration. The Wrangler configuration remains available as an alternative
+if Wrangler is installed later.
 
 Then build the app with its public URL:
 

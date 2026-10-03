@@ -136,3 +136,4 @@ podcast-index-secret.txt
 .dev.vars.*
 !.dev.vars.example
 .wrangler/
+.cloudflare/

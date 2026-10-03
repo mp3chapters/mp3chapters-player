@@ -45,7 +45,7 @@ export default {
         }),
         new CopyWebpackPlugin({ patterns: [
             { from: 'src-app/index.html', to: 'index.html' },
-            { from: 'src-app/vidstack', to: 'vidstack' },
+            { from: 'src-app/vidstack', to: 'vidstack', globOptions: { ignore: ['**/.DS_Store'] } },
         ] }),
     ],
 };

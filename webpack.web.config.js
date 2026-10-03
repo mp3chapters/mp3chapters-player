@@ -7,6 +7,7 @@ export default {
         filename: 'main.js',
         path: path.resolve('dist'),
         chunkFilename: '[name].bundle.js',
+        clean: true,
     },
     devServer: {
         static: {
@@ -15,8 +16,8 @@ export default {
         hot: true,
         open: false
     },
-    devtool: 'source-map',
-    mode: 'development',
+    devtool: false,
+    mode: 'production',
     module: {
         rules: [
             {
@@ -32,7 +33,7 @@ export default {
                 // { from: 'src-web/example.mp3', to: 'example.mp3' },
                 // { from: 'src-web/silence.mp3', to: 'silence.mp3' },
                 { from: 'src-web/instruction.svg', to: 'instruction.svg' },
-                { from: 'src-web/vidstack', to: 'vidstack' },
+                { from: 'src-web/vidstack', to: 'vidstack', globOptions: { ignore: ['**/.DS_Store'] } },
             ],
         }),
     ],

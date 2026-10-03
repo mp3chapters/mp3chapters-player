@@ -185,7 +185,7 @@ export function toggleShortcutsPanel() {
     }
 }
 
-// Make it available globally for the onclick handler
+// Expose the shared shortcuts toggle for app integrations.
 window.toggleShortcutsPanel = toggleShortcutsPanel;
 
 export function startUp() {
@@ -221,19 +221,8 @@ export function startUp() {
         navigator.mediaSession.setActionHandler('seekforward', null);
     }
 
-    setTimeout(() => {
-        document.querySelector("media-play-button").disabled = true;
-        document.querySelector("media-time-slider").disabled = true;
-    }, 100);
-    
+    // Vidstack manages control readiness, including its dynamically rendered layout.
     player.addEventListener('loaded-data', (e) => {
-        if (player.src == "silence.mp3" || player.src == "404.mp3") {
-            document.querySelector("media-play-button").disabled = true;
-            document.querySelector("media-time-slider").disabled = true;
-        } else {
-            document.querySelector("media-play-button").disabled = false;
-            document.querySelector("media-time-slider").disabled = false;
-        }
         chapters.duration = player.state.duration;
         window.chapters.addToPlayer();
         // add data-tauri-drag-region to most elements
@@ -252,6 +241,8 @@ export function startUp() {
     player.addEventListener('source-change', () => {
         displayedImage = -1;
         displayedChapterIndex = -1;
+        chapters.setChapters([]);
+        window.chapterImages = [];
     });
     player.addEventListener('time-update', (e) => {
         window.currentTime = e.detail.currentTime * 1000;
@@ -281,8 +272,8 @@ export function startUp() {
                 img.style.visibility = "visible";
                 if (fileInfoDisplay) fileInfoDisplay.style.display = 'none';
             } else {
-                img.style.display = 'none';
-                img.style.visibility = "hidden";
+                img.style.display = fileInfoDisplay ? 'none' : '';
+                img.style.visibility = fileInfoDisplay ? 'hidden' : 'visible';
                 if (fileInfoDisplay) fileInfoDisplay.style.display = '';
             }
         }

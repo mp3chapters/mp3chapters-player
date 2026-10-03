@@ -6,7 +6,8 @@
   "scripts": {
     "tauri": "tauri",
     "build-app": "webpack --config webpack.tauri.config.js",
-    "web": "webpack serve --config webpack.web.config.js --open",
+    "build-worker": "node worker/build.js",
+    "web": "webpack serve --config webpack.web.config.js --mode development --open",
     "build-web": "webpack --config webpack.web.config.js",
     "test": "node --test tests/*.test.js worker/tests/*.test.js"
   },
