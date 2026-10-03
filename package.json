@@ -6,7 +6,8 @@
   "scripts": {
     "tauri": "webpack --config webpack.tauri.config.js && tauri",
     "web": "webpack serve --config webpack.web.config.js --open",
-    "build-web": "webpack --config webpack.web.config.js"
+    "build-web": "webpack --config webpack.web.config.js",
+    "test": "node --test tests/*.test.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",

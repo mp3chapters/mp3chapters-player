@@ -1,5 +1,6 @@
 import '@common/node-id3-browserify.js';
 import { ChapterList } from '@common/ChapterList.js';
+import { openExternalUrl, updateChapterLink } from './Links.js';
 
 // Keyboard shortcuts configuration
 // Standard shortcuts based on VLC, YouTube, and other popular media players
@@ -198,6 +199,11 @@ export function startUp() {
 
     // Set up keyboard shortcuts for playback control
     setupKeyboardShortcuts(player, chapters);
+    document.querySelector('.shortcuts-close')?.addEventListener('click', toggleShortcutsPanel);
+    document.getElementById('chapter-url-chip')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        openExternalUrl(event.currentTarget.href).catch(console.error);
+    });
 
     // Set up Media Session action handlers for lock screen / control center
     if ('mediaSession' in navigator) {
@@ -231,7 +237,7 @@ export function startUp() {
         chapters.duration = player.state.duration;
         window.chapters.addToPlayer();
         // add data-tauri-drag-region to most elements
-        document.querySelector('.vds-chapter-title').setAttribute('data-tauri-drag-region', '');
+        document.querySelector('.vds-chapter-title')?.setAttribute('data-tauri-drag-region', '');
         for (const elem of document.querySelectorAll('media-controls-group')) {
             elem.setAttribute('data-tauri-drag-region', '');
         }
@@ -261,7 +267,7 @@ export function startUp() {
                 img.src = url;
                 img.style.display = '';
                 img.style.visibility = "visible";
-                fileInfoDisplay.style.display = 'none';
+                if (fileInfoDisplay) fileInfoDisplay.style.display = 'none';
             }
         } else if (displayedImage !== -1) {
             displayedImage = -1;
@@ -269,11 +275,11 @@ export function startUp() {
             if (window.hasCoverArt) {
                 img.style.display = '';
                 img.style.visibility = "visible";
-                fileInfoDisplay.style.display = 'none';
+                if (fileInfoDisplay) fileInfoDisplay.style.display = 'none';
             } else {
                 img.style.display = 'none';
                 img.style.visibility = "hidden";
-                fileInfoDisplay.style.display = '';
+                if (fileInfoDisplay) fileInfoDisplay.style.display = '';
             }
         }
         // Update media session metadata with current chapter info
@@ -303,15 +309,7 @@ export function startUp() {
         }
         // show/hide chapter URL chip
         const chipEl = document.getElementById('chapter-url-chip');
-        if (chipEl) {
-            if (currentChapter && currentChapter.url) {
-                chipEl.href = currentChapter.url;
-                chipEl.innerHTML = currentChapter.url.replace(/^https?:\/\//, '') + ' <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-left: 3px;"><path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5"/><path d="M7 1.5h3.5V5"/><path d="M5.5 6.5L10.5 1.5"/></svg>';
-                chipEl.classList.add('visible');
-            } else {
-                chipEl.classList.remove('visible');
-            }
-        }
+        updateChapterLink(chipEl, currentChapter?.url);
         // update chapter list
         const currentVisibleChapter = chapters.visibleChapterAtTime(window.currentTime);
         if (currentVisibleChapter) {

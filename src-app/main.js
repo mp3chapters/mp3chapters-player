@@ -30,7 +30,7 @@ async function handleMP3FilePath(filePath) {
     player.src = { src: url, type: 'audio/mpeg' };
     const fileName = filePath.split('\\').pop().split('/').pop();
     window.currentFilename = fileName;
-    const { id3Title } = await loadFile(player, url);
+    const { id3Title } = await loadFile(player, url, fileName);
     const displayName = id3Title ? `${id3Title} [${fileName}]` : fileName;
     appWindow.setTitle(displayName);
     const filenameChip = document.getElementById('filename-chip');

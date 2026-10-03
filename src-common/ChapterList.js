@@ -1,4 +1,5 @@
 import { TextTrack } from 'vidstack';
+import { openExternalUrl, safeExternalUrl } from './Links.js';
 
 export function secondsToString(milliseconds, useWords = false) {
     const seconds = Math.floor(milliseconds / 1000);
@@ -250,18 +251,16 @@ export class ChapterList {
             chapterDuration.textContent = secondsToString(chapter.officialEnd - chapter.start, true);
 
             const chapterLink = document.createElement('a');
-            chapterLink.href = chapter.url;
+            const url = safeExternalUrl(chapter.url);
+            if (url) chapterLink.href = url;
+            chapterLink.hidden = !url;
             chapterLink.target = '_blank';
             chapterLink.className = 'chapter-toc-item-link';
-            chapterLink.textContent = chapter.url;
+            chapterLink.textContent = url || '';
             chapterLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (window.__TAURI__ && window.__TAURI__.shell) {
-                    window.__TAURI__.shell.open(chapter.url);
-                } else {
-                    window.open(chapter.url, '_blank');
-                }
+                openExternalUrl(url).catch(console.error);
             });
 
             chapterTextDiv.appendChild(chapterTitle);

@@ -22,10 +22,11 @@ function selectAndLoadFile() {
     fileInput.accept = 'audio/*';
     fileInput.addEventListener('change', async function () {
         const file = fileInput.files[0];
+        if (!file) return;
         const fileName = file.name;
         const url = URL.createObjectURL(file);
         player.src = { src: url, type: 'audio/mpeg' };
-        const { id3Title } = await loadFile(player, url);
+        const { id3Title } = await loadFile(player, url, fileName);
         if (id3Title) {
             document.title = `${id3Title} [${fileName}]`;
         } else {
@@ -113,7 +114,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         const file = new File([blob], filename);
         const url = URL.createObjectURL(file);
         player.src = { src: url, type: 'audio/mpeg' };
-        const { id3Title } = await loadFile(player, url);
+        const { id3Title } = await loadFile(player, url, filename);
         if (id3Title) {
             document.title = `${id3Title} [${filename}]`;
         } else {

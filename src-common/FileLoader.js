@@ -5,13 +5,13 @@ function arrayEquals(a, b) {
         a.every((val, index) => val === b[index]);
 }
 
-export async function loadFile(player, url) {
+export async function loadFile(player, url, filename = 'audiofile') {
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
     const blob = await response.blob();
-    const file = new File([blob], "audiofile", { type: "audio/mpeg" });
+    const file = new File([blob], filename, { type: blob.type || 'audio/mpeg' });
 
     window.currentFilename = file.name;
     window.currentFile = file;
@@ -73,13 +73,14 @@ export async function loadFile(player, url) {
             }
             parsedChapters.push(chapterObject);
         }
-        chapters.duration = player.state.duration;
+        window.chapters.duration = player.state.duration;
         window.chapters.setChapters(parsedChapters);
     } else {
         const baseChapters = [
             {
                 "title": "Introduction",
-                "start": 0
+                "start": 0,
+                "toc": true
             }
         ]
         window.chapters.setChapters(baseChapters);
@@ -96,19 +97,21 @@ export async function loadFile(player, url) {
         const url = URL.createObjectURL(blob);
         img.src = url;
         img.style.display = '';
-        fileInfoDisplay.style.display = 'none';
+        if (fileInfoDisplay) fileInfoDisplay.style.display = 'none';
         window.hasCoverArt = true;
     } else {
         img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg==";
-        img.style.display = 'none';
+        // The web layout uses the cover image as its file picker.
+        img.style.display = fileInfoDisplay ? 'none' : '';
         // Show text info instead
         const title = tags.title || window.currentFilename || '';
         const artist = tags.artist || '';
         const album = tags.album || '';
-        document.getElementById('file-info-title').textContent = title;
-        document.getElementById('file-info-artist').textContent = artist;
-        document.getElementById('file-info-album').textContent = album;
-        fileInfoDisplay.style.display = '';
+        for (const [id, text] of [['file-info-title', title], ['file-info-artist', artist], ['file-info-album', album]]) {
+            const element = document.getElementById(id);
+            if (element) element.textContent = text;
+        }
+        if (fileInfoDisplay) fileInfoDisplay.style.display = '';
         window.hasCoverArt = false;
     }
     window.coverImg = img.src;
@@ -124,7 +127,7 @@ export async function loadFile(player, url) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: tags.title || window.currentFilename || '',
             artist: tags.artist || '',
-            album: tags.title || window.currentFilename || '',
+            album: tags.album || '',
             artwork,
         });
     }
