@@ -1,2 +1,2 @@
-PODCAST_API_KEY=replace-with-your-key
-PODCAST_API_SECRET=replace-with-your-secret
+PODCAST_API_KEY='replace-with-your-key'
+PODCAST_API_SECRET='replace-with-your-secret'

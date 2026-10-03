@@ -2,7 +2,7 @@ import path from 'path';
 import webpack from 'webpack';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 
-const proxyUrl = process.env.PODCAST_PROXY_URL || '';
+const proxyUrl = process.env.PODCAST_PROXY_URL ?? 'https://mp3chapters-podcast-proxy.mp3chapters.workers.dev';
 if (proxyUrl) {
     const url = new URL(proxyUrl);
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);

@@ -8,7 +8,7 @@ const env = {
     PODCAST_RATE_LIMITER: { limit: async () => ({ success: true }) },
 };
 const request = (path, options) => new Request('https://proxy.example' + path, options);
-const worker = options => createWorker({ cryptoImpl: webcrypto, ...options });
+const worker = options => createWorker({ cryptoImpl: webcrypto, logger: { warn() {} }, ...options });
 
 test('signs the fixed upstream request and returns public JSON', async () => {
     let upstream;
@@ -20,7 +20,7 @@ test('signs the fixed upstream request and returns public JSON', async () => {
     assert.equal(response.status, 200);
     assert.equal(upstream.url, 'https://api.podcastindex.org/api/1.0/search/byterm?q=hello&max=20');
     assert.equal(upstream.options.headers.Authorization, createHash('sha1').update('test-keytest-secret1700000000').digest('hex'));
-    assert.equal(upstream.options.redirect, 'error');
+    assert.equal(upstream.options.redirect, 'manual');
     assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
     const body = await response.text();
     assert.ok(body.includes('Offline Fixture'));
@@ -88,10 +88,11 @@ test('caches canonical validated results without storing credentials', async () 
     assert.equal(response.headers.get('Cache-Control'), 'public, max-age=300');
 });
 
-test('does not cache upstream errors, malformed JSON, or network failures', async () => {
+test('does not cache upstream errors, redirects, malformed JSON, or network failures', async () => {
     let puts = 0;
     for (const fetchImpl of [
         async () => new Response('failure', { status: 401 }),
+        async () => new Response(null, { status: 302, headers: { Location: 'https://other.example' } }),
         async () => new Response('not JSON'),
         async () => { throw new Error('private upstream detail'); },
     ]) {
@@ -101,4 +102,18 @@ test('does not cache upstream errors, malformed JSON, or network failures', asyn
         assert.ok(!(await response.text()).includes('private upstream detail'));
     }
     assert.equal(puts, 0);
+});
+
+test('diagnostics do not reveal credentials, search terms, or exception messages', async () => {
+    const logs = [];
+    const proxy = worker({
+        logger: { warn: (...args) => logs.push(args) },
+        fetchImpl: async () => { throw new Error('test-key test-secret private-search-term'); },
+    });
+    const response = await proxy.fetch(request('/search/byterm?q=private-search-term'), env);
+    assert.equal(response.status, 502);
+    assert.equal(logs.length, 1);
+    assert.equal(logs[0][1].stage, 'upstream-fetch');
+    const output = JSON.stringify(logs) + await response.text() + JSON.stringify([...response.headers]);
+    for (const privateValue of ['test-key', 'test-secret', 'private-search-term']) assert.ok(!output.includes(privateValue));
 });

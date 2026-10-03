@@ -33,19 +33,24 @@ assets, and Tauri generates hashes for the app's inline scripts.
 
 ## Podcast search
 
-The app needs the public URL of the proxy described in [worker/README.md](worker/README.md):
+The app uses the deployed [Cloudflare proxy](https://mp3chapters-podcast-proxy.mp3chapters.workers.dev)
+by default. Its search and episode endpoints were verified on October 3, 2026.
+Deployment instructions are in [worker/README.md](worker/README.md). To use a
+different deployment or a local Worker, override its public URL:
 
 ```sh
 PODCAST_PROXY_URL=https://YOUR-WORKER.workers.dev npm run tauri dev
 ```
 
-The same environment variable is used for release builds. Set the GitHub
-repository variable `PODCAST_PROXY_URL` for CI. Builds without a proxy URL still
-play local audio, but show that podcast search is unavailable. API credentials
-must stay in the Worker's secret bindings; never include them in app builds.
+The same environment variable is used for release builds. The GitHub repository
+variable `PODCAST_PROXY_URL` is set to the deployed URL for CI. Setting the
+environment variable to an empty string disables podcast search while keeping
+local audio playback available. API credentials stay in the Worker's encrypted
+secret bindings; never include them in app builds.
 
 The old credential file is ignored and no longer tracked or packaged. Its
-previous values remain in Git history and must be rotated before deployment.
+previous values remain in Git history; revoke them with Podcast Index if you
+have not already. The deployed Worker uses the replacement credentials.
 No history rewrite is needed for local development, and no automatic rewrite is
 performed.
 
