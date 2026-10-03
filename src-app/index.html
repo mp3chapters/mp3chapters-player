@@ -376,9 +376,48 @@
       color: #1d1d1f;
     }
 
-    .vds-slider-chapter-title {
-      padding: var(--media-slider-value-padding, 1px 10px);
-      background-color: rgba(255, 255, 255, 0.6);
+    /* Chapter seek preview */
+    .vds-time-slider .vds-slider-preview {
+      box-sizing: border-box;
+      max-width: min(320px, calc(100vw - 32px), 100%);
+      align-items: flex-start;
+      gap: 4px;
+      padding: 8px 12px;
+      background: var(--chapter-preview-bg, #fff);
+      border: 1px solid var(--chapter-preview-border, #d1d1d1);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+    }
+
+    .vds-time-slider .vds-slider-chapter-title {
+      display: block;
+      max-width: 100%;
+      padding: 0;
+      background: none;
+      color: var(--chapter-preview-title, #1d1d1f);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.4;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .vds-time-slider .vds-slider-chapter-title:empty {
+      display: none;
+    }
+
+    .vds-time-slider .vds-slider-value {
+      margin: 0;
+      padding: 0;
+      background: none;
+      border: none;
+      color: var(--chapter-preview-time, #6e6e73);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.4;
     }
 
     .vds-chapters-menu {
@@ -965,9 +1004,11 @@
         color: #e5e5e5;
       }
 
-      .vds-slider-chapter-title {
-        background-color: #3a3a3a;
-        color: #ccc;
+      .vds-time-slider .vds-slider-preview {
+        --chapter-preview-bg: #323232;
+        --chapter-preview-border: #555;
+        --chapter-preview-title: #e5e5e5;
+        --chapter-preview-time: #b3b3b3;
       }
 
       /* Shortcuts panel */
