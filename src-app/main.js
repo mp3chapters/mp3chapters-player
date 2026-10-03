@@ -21,8 +21,8 @@ function showFileError(error) {
     message(typeof error === 'string' ? error : error.message, { title: 'Could not open audio file', kind: 'error' }).catch(console.error);
 }
 
-function requestFileOpen(filePath) {
-    fileLoadQueue = fileLoadQueue.catch(() => {}).then(() => handleMP3FilePath(filePath));
+function requestFileOpen(filePath, podcast = null) {
+    fileLoadQueue = fileLoadQueue.catch(() => {}).then(() => handleMP3FilePath(filePath, podcast));
     return fileLoadQueue;
 }
 
@@ -31,7 +31,11 @@ function audioMimeType(filePath) {
     return { ogg: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', flac: 'audio/flac' }[extension] || 'audio/mpeg';
 }
 
-async function handleMP3FilePath(filePath) {
+async function handleMP3FilePath(filePath, podcast = null) {
+    if (isDesktop && !podcast) {
+        const recent = await invoke('get_recent_files');
+        podcast = recent.find(file => file.path === filePath)?.podcast || null;
+    }
     let url;
     const isFileUri = /^(file|content):\/\//.test(filePath);
     const mime = audioMimeType(filePath);
@@ -50,15 +54,19 @@ async function handleMP3FilePath(filePath) {
     activeBlobUrl = isFileUri ? url : null;
     const fileName = filePath.split('\\').pop().split('/').pop();
     window.currentFilename = fileName;
-    const { id3Title } = await loadFile(player, url, fileName);
-    const displayName = id3Title ? `${id3Title} [${fileName}]` : fileName;
+    const { id3Title, artist, album } = await loadFile(player, url, fileName, podcast);
+    if (!podcast && /[\\/]podcast-cache-v2[\\/]/.test(filePath)) {
+        podcast = { show: album || artist || 'Podcast', title: id3Title || 'Episode', artwork: null };
+    }
+    const displayName = podcast ? `${podcast.show} > ${podcast.title}` : id3Title ? `${id3Title} [${fileName}]` : fileName;
     if (isDesktop) await appWindow.setTitle(displayName);
     const filenameChip = document.getElementById('filename-chip');
     filenameChip.textContent = displayName;
+    filenameChip.title = filePath;
     filenameChip.classList.add('visible');
     document.getElementById('welcome-screen')?.classList.add('hidden');
     if (isDesktop) {
-        await invoke('add_recent_file', { path: filePath });
+        await invoke('add_recent_file', { path: filePath, podcast });
     }
 }
 

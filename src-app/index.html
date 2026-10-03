@@ -506,6 +506,7 @@
 
     .podcast-panel.hidden {
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
     }
 
@@ -617,6 +618,36 @@
       background: rgba(0, 0, 0, 0.06);
     }
 
+    .podcast-item:focus-within {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .podcast-item-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      border: none;
+      border-radius: 4px;
+      background: none;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .podcast-item-main:focus-visible {
+      outline: 2px solid #007aff;
+      outline-offset: 3px;
+    }
+
+    .podcast-cached {
+      flex-shrink: 0;
+      color: #248440;
+      font-weight: 600;
+    }
+
     .podcast-item:active {
       background: rgba(0, 0, 0, 0.1);
     }
@@ -641,6 +672,7 @@
     }
 
     .podcast-item-title {
+      display: block;
       font-size: 0.85em;
       font-weight: 400;
       overflow: hidden;
@@ -650,6 +682,7 @@
     }
 
     .podcast-item-author {
+      display: block;
       font-size: 0.75em;
       color: #888;
       overflow: hidden;
@@ -669,7 +702,8 @@
       flex-shrink: 0;
     }
 
-    .podcast-item:hover .podcast-item-remove {
+    .podcast-item:hover .podcast-item-remove,
+    .podcast-item:focus-within .podcast-item-remove {
       opacity: 1;
     }
 
@@ -691,7 +725,8 @@
       align-items: center;
     }
 
-    .podcast-item:hover .podcast-item-info {
+    .podcast-item:hover .podcast-item-info,
+    .podcast-item:focus-within .podcast-item-info {
       opacity: 1;
     }
 
@@ -979,8 +1014,13 @@
         color: #ccc;
       }
 
-      .podcast-item:hover {
+      .podcast-item:hover,
+      .podcast-item:focus-within {
         background: rgba(255, 255, 255, 0.08);
+      }
+
+      .podcast-cached {
+        color: #69cf87;
       }
 
       .podcast-item:active {
@@ -1168,7 +1208,7 @@
   </div>
 
   <!-- Podcast Browser Panel -->
-  <div id="podcast-panel" class="podcast-panel hidden">
+  <div id="podcast-panel" class="podcast-panel hidden" role="dialog" aria-modal="true" aria-label="Browse podcasts" aria-hidden="true">
     <div class="podcast-content">
       <div class="podcast-search">
         <svg class="podcast-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

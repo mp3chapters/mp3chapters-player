@@ -3,6 +3,10 @@ use tauri::Manager;
 use tauri_plugin_fs::FsExt;
 mod atomic_download;
 mod open_files;
+#[cfg(desktop)]
+mod recent_files;
+#[cfg(desktop)]
+use recent_files::{PodcastEpisode, RecentFile};
 
 #[cfg(desktop)]
 use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
@@ -168,6 +172,44 @@ async fn download_file(app: tauri::AppHandle, url: String, filename: String) -> 
     Ok(())
 }
 
+#[derive(serde::Serialize)]
+struct CachedEpisode {
+    filename: String,
+    size: u64,
+}
+
+#[tauri::command]
+fn get_podcast_cache(app: tauri::AppHandle) -> Result<Vec<CachedEpisode>, String> {
+    let directory = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("podcast-cache-v2");
+    let entries = match std::fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(error.to_string()),
+    };
+    let mut files = Vec::new();
+    for entry in entries.flatten() {
+        let filename = entry.file_name().to_string_lossy().into_owned();
+        if !atomic_download::valid_cache_filename(&filename)
+            || !entry.file_type().is_ok_and(|kind| kind.is_file())
+        {
+            continue;
+        }
+        if let Ok(metadata) = entry.metadata() {
+            if metadata.len() > 0 {
+                files.push(CachedEpisode {
+                    filename,
+                    size: metadata.len(),
+                });
+            }
+        }
+    }
+    Ok(files)
+}
+
 #[cfg(desktop)]
 fn recent_files_path(app: &tauri::AppHandle) -> std::path::PathBuf {
     let dir = app
@@ -179,7 +221,7 @@ fn recent_files_path(app: &tauri::AppHandle) -> std::path::PathBuf {
 }
 
 #[cfg(desktop)]
-fn load_recent_files(app: &tauri::AppHandle) -> Vec<String> {
+fn load_recent_files(app: &tauri::AppHandle) -> Vec<RecentFile> {
     let path = recent_files_path(app);
     std::fs::read_to_string(&path)
         .ok()
@@ -188,7 +230,7 @@ fn load_recent_files(app: &tauri::AppHandle) -> Vec<String> {
 }
 
 #[cfg(desktop)]
-fn save_recent_files(app: &tauri::AppHandle, files: &[String]) {
+fn save_recent_files(app: &tauri::AppHandle, files: &[RecentFile]) {
     let path = recent_files_path(app);
     if let Ok(json) = serde_json::to_string_pretty(files) {
         std::fs::write(&path, json).ok();
@@ -198,7 +240,7 @@ fn save_recent_files(app: &tauri::AppHandle, files: &[String]) {
 #[cfg(desktop)]
 fn build_menu(
     app: &tauri::AppHandle,
-    recent_files: &[String],
+    recent_files: &[RecentFile],
 ) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
     // App menu
     let about = PredefinedMenuItem::about(app, Some("MP3 Chapter Player"), None)?;
@@ -224,10 +266,9 @@ fn build_menu(
     // Open Recent submenu
     if !recent_files.is_empty() {
         let mut recent_submenu = SubmenuBuilder::new(app, "Open Recent");
-        for (i, path) in recent_files.iter().enumerate() {
-            let filename = path.rsplit(['/', '\\']).next().unwrap_or(path);
+        for (i, file) in recent_files.iter().enumerate() {
             let item =
-                MenuItemBuilder::with_id(format!("recent_file_{}", i), filename).build(app)?;
+                MenuItemBuilder::with_id(format!("recent_file_{}", i), file.label()).build(app)?;
             recent_submenu = recent_submenu.item(&item);
         }
         recent_submenu = recent_submenu.separator();
@@ -318,11 +359,15 @@ fn build_menu(
 }
 
 #[cfg(desktop)]
-struct RecentFiles(Mutex<Vec<String>>);
+struct RecentFiles(Mutex<Vec<RecentFile>>);
 
 #[cfg(desktop)]
 #[tauri::command]
-fn add_recent_file(app: tauri::AppHandle, path: String) -> Result<(), String> {
+fn add_recent_file(
+    app: tauri::AppHandle,
+    path: String,
+    podcast: Option<PodcastEpisode>,
+) -> Result<(), String> {
     let path = audio_file_path(&path)?;
     if !app.asset_protocol_scope().is_allowed(&path) {
         return Err("This file has not been opened by the user".into());
@@ -331,10 +376,7 @@ fn add_recent_file(app: tauri::AppHandle, path: String) -> Result<(), String> {
     let state = app.state::<RecentFiles>();
     let mut files = state.0.lock().unwrap();
 
-    // Remove if already present, then add to front
-    files.retain(|f| f != &path);
-    files.insert(0, path);
-    files.truncate(MAX_RECENT_FILES);
+    recent_files::remember(&mut files, path, podcast, MAX_RECENT_FILES);
 
     save_recent_files(&app, &files);
 
@@ -347,7 +389,7 @@ fn add_recent_file(app: tauri::AppHandle, path: String) -> Result<(), String> {
 
 #[cfg(desktop)]
 #[tauri::command]
-fn get_recent_files(app: tauri::AppHandle) -> Vec<String> {
+fn get_recent_files(app: tauri::AppHandle) -> Vec<RecentFile> {
     let state = app.state::<RecentFiles>();
     let files = state.0.lock().unwrap().clone();
     files
@@ -368,12 +410,17 @@ pub fn run() {
     let builder = builder.invoke_handler(tauri::generate_handler![
         add_recent_file,
         get_recent_files,
+        get_podcast_cache,
         download_file,
         frontend_ready
     ]);
 
     #[cfg(mobile)]
-    let builder = builder.invoke_handler(tauri::generate_handler![download_file, frontend_ready]);
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        download_file,
+        get_podcast_cache,
+        frontend_ready
+    ]);
 
     let builder = builder.setup(|_app| {
         // Create main window
@@ -402,10 +449,13 @@ pub fn run() {
         #[cfg(desktop)]
         {
             let app = _app;
-            let recent_files: Vec<String> = load_recent_files(&app.handle())
+            let recent_files: Vec<RecentFile> = load_recent_files(&app.handle())
                 .into_iter()
-                .filter_map(|value| allow_audio_file(app.handle(), &value).ok())
-                .map(|path| path.to_string_lossy().into_owned())
+                .filter_map(|mut file| {
+                    let path = allow_audio_file(app.handle(), &file.path).ok()?;
+                    file.path = path.to_string_lossy().into_owned();
+                    Some(file)
+                })
                 .take(MAX_RECENT_FILES)
                 .collect();
             app.manage(RecentFiles(Mutex::new(recent_files.clone())));
@@ -441,8 +491,8 @@ pub fn run() {
             {
                 let state = app.state::<RecentFiles>();
                 let files = state.0.lock().unwrap();
-                if let Some(path) = files.get(index) {
-                    if let Err(error) = queue_open_file(app, path) {
+                if let Some(file) = files.get(index) {
+                    if let Err(error) = queue_open_file(app, &file.path) {
                         let _ = app.emit("file-open-error", error);
                     }
                     return;

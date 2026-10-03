@@ -3,12 +3,25 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 pub fn valid_cache_filename(filename: &str) -> bool {
-    let Some((hash, extension)) = filename.rsplit_once('.') else {
+    let Some((stem, extension)) = filename.rsplit_once('.') else {
         return false;
     };
-    hash.len() == 64
+    if !matches!(extension, "mp3" | "ogg" | "m4a" | "aac" | "wav" | "flac") {
+        return false;
+    }
+    if stem.len() == 64 && stem.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return true; // Existing downloads remain usable.
+    }
+    let Some((name, hash)) = stem.rsplit_once("--") else {
+        return false;
+    };
+    !name.is_empty()
+        && name.chars().count() <= 35
+        && name.chars().all(|ch| ch.is_alphanumeric() || ch == '-')
+        && !name.starts_with('-')
+        && !name.ends_with('-')
+        && hash.len() == 24
         && hash.bytes().all(|byte| byte.is_ascii_hexdigit())
-        && matches!(extension, "mp3" | "ogg" | "m4a" | "aac" | "wav" | "flac")
 }
 
 pub struct PendingDownload {
@@ -125,6 +138,27 @@ mod tests {
             assert!(!valid_cache_filename(name));
         }
         assert!(valid_cache_filename(&format!("{}.mp3", "a".repeat(64))));
+        assert!(valid_cache_filename(&format!(
+            "show-episode--{}.mp3",
+            "a".repeat(24)
+        )));
+        assert!(valid_cache_filename(&format!(
+            "東京--{}.m4a",
+            "b".repeat(24)
+        )));
+        assert!(!valid_cache_filename(&format!(
+            "../episode--{}.mp3",
+            "a".repeat(24)
+        )));
+        assert!(!valid_cache_filename(&format!(
+            "episode--{}.mp3",
+            "a".repeat(23)
+        )));
+        assert!(!valid_cache_filename(&format!(
+            "{}--{}.mp3",
+            "a".repeat(36),
+            "b".repeat(24)
+        )));
         assert!(!valid_cache_filename(&format!("{}.txt", "a".repeat(64))));
         fs::remove_dir(&dir).unwrap();
     }

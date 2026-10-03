@@ -3,7 +3,8 @@ import { appDataDir, join } from '@tauri-apps/api/path';
 import { exists } from '@tauri-apps/plugin-fs';
 import { listen } from '@tauri-apps/api/event';
 import { createPodcastApi } from './PodcastApi.js';
-import { createEpisodeDownloader, getCacheFilename } from './PodcastDownloads.js';
+import { createEpisodeDownloader, getCacheFilename, getCacheKey, findCachedEpisode, formatFileSize } from './PodcastDownloads.js';
+import { installPodcastNavigation } from './PodcastNavigation.js';
 import { openExternalUrl } from '@common/Links.js';
 
 /* global __PODCAST_PROXY_URL__ */
@@ -18,6 +19,8 @@ let cachedEpisodes = [];
 let currentPodcast = null;
 let currentEpisode = null;
 let searchTimeout = null;
+let requestGeneration = 0;
+let panelOpener = null;
 
 // --- Recent podcasts (localStorage) ---
 
@@ -61,16 +64,24 @@ function getNavTitle() { return $('podcast-nav-title'); }
 
 export function togglePodcastPanel() {
     const panel = getPanel();
-    panel.classList.toggle('hidden');
-    if (!panel.classList.contains('hidden')) {
-        setState('SEARCH');
-        getSearchInput().value = '';
-        getSearchInput().focus();
-    }
+    if (isPodcastPanelOpen()) { closePodcastPanel(); return; }
+    panelOpener = document.activeElement;
+    panel.classList.remove('hidden');
+    panel.setAttribute('aria-hidden', 'false');
+    requestGeneration++;
+    clearTimeout(searchTimeout);
+    setState('SEARCH');
+    getSearchInput().value = '';
+    getSearchInput().focus();
 }
 
 function closePodcastPanel() {
+    requestGeneration++;
+    clearTimeout(searchTimeout);
     getPanel().classList.add('hidden');
+    getPanel().setAttribute('aria-hidden', 'true');
+    if (panelOpener?.isConnected && panelOpener.tabIndex >= 0 && panelOpener.getClientRects().length) panelOpener.focus();
+    else document.querySelector('media-play-button')?.focus();
 }
 
 export function isPodcastPanelOpen() {
@@ -79,7 +90,7 @@ export function isPodcastPanelOpen() {
 
 // --- State ---
 
-function setState(newState) {
+function setState(newState, focusFirst = false) {
     state = newState;
     const navBar = getNavBar();
     const searchInput = getSearchInput();
@@ -105,7 +116,7 @@ function setState(newState) {
             getNavTitle().textContent = currentPodcast ? currentPodcast.title : 'Episodes';
             navBar.style.display = '';
             searchInput.parentElement.style.display = 'none';
-            renderEpisodes();
+            renderEpisodes(focusFirst);
             break;
         case 'EPISODE_DETAIL':
             getNavTitle().textContent = currentPodcast ? currentPodcast.title : 'Episodes';
@@ -149,33 +160,36 @@ function renderRecentPodcasts() {
 function createPodcastItem(podcast, showRemove = false) {
     const item = document.createElement('div');
     item.className = 'podcast-item';
+    const action = createRowAction(() => loadEpisodes(podcast));
 
     const img = document.createElement('img');
     img.src = podcast.artwork || podcast.image || '';
     img.alt = '';
     img.loading = 'lazy';
 
-    const textDiv = document.createElement('div');
+    const textDiv = document.createElement('span');
     textDiv.className = 'podcast-item-text';
 
-    const titleEl = document.createElement('div');
+    const titleEl = document.createElement('span');
     titleEl.className = 'podcast-item-title';
     titleEl.textContent = podcast.title;
 
-    const authorEl = document.createElement('div');
+    const authorEl = document.createElement('span');
     authorEl.className = 'podcast-item-author';
     authorEl.textContent = podcast.author || '';
 
     textDiv.appendChild(titleEl);
     textDiv.appendChild(authorEl);
-    item.appendChild(img);
-    item.appendChild(textDiv);
+    action.appendChild(img);
+    action.appendChild(textDiv);
+    item.appendChild(action);
 
     if (showRemove) {
         const removeBtn = document.createElement('button');
         removeBtn.className = 'podcast-item-remove';
         removeBtn.textContent = '×';
         removeBtn.title = 'Remove from recent';
+        removeBtn.setAttribute('aria-label', `Remove ${podcast.title} from recent podcasts`);
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             removeRecentPodcast(podcast.id);
@@ -184,8 +198,16 @@ function createPodcastItem(podcast, showRemove = false) {
         item.appendChild(removeBtn);
     }
 
-    item.addEventListener('click', () => loadEpisodes(podcast));
     return item;
+}
+
+function createRowAction(activate) {
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'podcast-item-main';
+    action.dataset.podcastRow = '';
+    action.addEventListener('click', activate);
+    return action;
 }
 
 function renderPodcasts() {
@@ -210,67 +232,93 @@ function formatDate(timestamp) {
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-async function getCachePath(enclosureUrl) {
-    const dataDir = await appDataDir();
-    const cacheDir = await join(dataDir, 'podcast-cache-v2');
-    const filename = await getCacheFilename(enclosureUrl);
-    return { filename, destPath: await join(cacheDir, filename) };
+function episodeMetadata(episode) {
+    return {
+        show: currentPodcast?.title || episode.feedTitle || 'Podcast',
+        title: episode.title || 'Episode',
+        artwork: episode.image || episode.feedImage || currentPodcast?.artwork || currentPodcast?.image || null,
+    };
 }
 
-async function renderEpisodes() {
+async function getCachePath(episode) {
+    const files = await invoke('get_podcast_cache');
+    const key = await getCacheKey(episode.enclosureUrl);
+    const cached = findCachedEpisode(files, key);
+    const dataDir = await appDataDir();
+    const cacheDir = await join(dataDir, 'podcast-cache-v2');
+    const filename = cached?.filename || await getCacheFilename(episode.enclosureUrl, episode.podcast || episodeMetadata(episode));
+    return { filename, destPath: await join(cacheDir, filename), cached };
+}
+
+async function renderEpisodes(focusFirst = false) {
     const list = getList();
+    const episodes = cachedEpisodes;
+    const podcast = currentPodcast;
+    let files = [];
+    try { files = await invoke('get_podcast_cache'); }
+    catch (error) { console.error('Could not check downloaded episodes:', error); }
+    const cached = await Promise.all(episodes.map(async episode => {
+        if (!episode.enclosureUrl) return null;
+        try { return findCachedEpisode(files, await getCacheKey(episode.enclosureUrl)); }
+        catch { return null; }
+    }));
+    if (state !== 'EPISODES' || cachedEpisodes !== episodes || currentPodcast !== podcast || !isPodcastPanelOpen()) return;
     list.innerHTML = '';
-    for (const episode of cachedEpisodes) {
+    for (const [index, episode] of episodes.entries()) {
         const item = document.createElement('div');
         item.className = 'podcast-item podcast-episode-item';
+        const action = createRowAction(() => downloadAndPlay(episode));
 
         const img = document.createElement('img');
         img.src = episode.image || episode.feedImage || '';
         img.alt = '';
         img.loading = 'lazy';
 
-        const textDiv = document.createElement('div');
+        const textDiv = document.createElement('span');
         textDiv.className = 'podcast-item-text';
 
-        const titleEl = document.createElement('div');
+        const titleEl = document.createElement('span');
         titleEl.className = 'podcast-item-title';
         titleEl.textContent = episode.title;
 
-        const metaEl = document.createElement('div');
+        const metaEl = document.createElement('span');
         metaEl.className = 'podcast-item-author';
         const parts = [];
         if (episode.datePublished) parts.push(formatDate(episode.datePublished));
         if (episode.duration) parts.push(formatDuration(episode.duration));
+        parts.push(formatFileSize(cached[index]?.size || episode.enclosureLength));
         metaEl.textContent = parts.join(' · ');
 
         textDiv.appendChild(titleEl);
         textDiv.appendChild(metaEl);
-        item.appendChild(img);
-        item.appendChild(textDiv);
-
-        // Check cache async, append indicator to meta line when ready
-        if (episode.enclosureUrl) {
-            getCachePath(episode.enclosureUrl).then(({ destPath }) =>
-                exists(destPath).then(cached => {
-                    if (cached) metaEl.textContent += ' · ✓ Downloaded';
-                })
-            ).catch(() => {});
+        action.appendChild(img);
+        action.appendChild(textDiv);
+        if (cached[index]) {
+            const badge = document.createElement('span');
+            badge.className = 'podcast-cached';
+            badge.textContent = '✓';
+            badge.title = 'Downloaded — available offline';
+            badge.setAttribute('role', 'img');
+            badge.setAttribute('aria-label', 'Downloaded — available offline');
+            action.appendChild(badge);
         }
+        item.appendChild(action);
 
         // Info button
         const infoBtn = document.createElement('button');
         infoBtn.className = 'podcast-item-info';
         infoBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="10" y="14.5" text-anchor="middle" font-size="12" font-weight="600" font-family="inherit">i</text></svg>';
         infoBtn.title = 'Episode info';
+        infoBtn.setAttribute('aria-label', `Info about ${episode.title}`);
         infoBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             showEpisodeDetail(episode);
         });
         item.appendChild(infoBtn);
 
-        item.addEventListener('click', () => downloadAndPlay(episode));
         list.appendChild(item);
     }
+    if (focusFirst) list.querySelector('[data-podcast-row]')?.focus();
 }
 
 function showEpisodeDetail(episode) {
@@ -307,6 +355,7 @@ function renderEpisodeDetail() {
     const parts = [];
     if (ep.datePublished) parts.push(formatDate(ep.datePublished));
     if (ep.duration) parts.push(formatDuration(ep.duration));
+    parts.push(formatFileSize(ep.enclosureLength));
     metaEl.textContent = parts.join(' · ');
 
     headerText.appendChild(titleEl);
@@ -315,22 +364,19 @@ function renderEpisodeDetail() {
     header.appendChild(headerText);
     detail.appendChild(header);
 
-    if (ep.enclosureLength) {
-        const mb = (ep.enclosureLength / (1024 * 1024)).toFixed(1);
-        metaEl.textContent += ` · ${mb} MB`;
-    }
-
     // Play button
     const playBtn = document.createElement('button');
     playBtn.className = 'podcast-episode-detail-play';
     playBtn.textContent = '▶ Play Episode';
     // Check cache to show different label
     if (ep.enclosureUrl) {
-        getCachePath(ep.enclosureUrl).then(({ destPath }) =>
-            exists(destPath).then(cached => {
-                if (cached) playBtn.textContent = '▶ Play Episode (Downloaded)';
-            })
-        ).catch(() => {});
+        getCachePath(ep).then(({ cached }) => {
+            if (cached) {
+                playBtn.textContent = '▶ Play Downloaded Episode';
+                parts[parts.length - 1] = formatFileSize(cached.size);
+                metaEl.textContent = parts.join(' · ') + ' · ✓ Downloaded';
+            }
+        }).catch(() => {});
     }
     playBtn.addEventListener('click', () => downloadAndPlay(ep));
     detail.appendChild(playBtn);
@@ -346,20 +392,22 @@ function renderEpisodeDetail() {
     }
 
     list.appendChild(detail);
+    playBtn.focus();
 }
 
 // --- Search ---
 
 async function searchPodcasts(query) {
+    const generation = ++requestGeneration;
     if (!query || query.length < 2) {
-        renderRecentPodcasts();
-        getStatus().textContent = '';
+        setState('SEARCH');
         return;
     }
     getStatus().textContent = 'Searching…';
     getList().innerHTML = '';
     try {
         const result = await apiRequest('/search/byterm', { q: query, max: 20 });
+        if (generation !== requestGeneration || !isPodcastPanelOpen()) return;
         cachedPodcasts = result.feeds || [];
         getStatus().textContent = '';
         setState('PODCASTS');
@@ -367,6 +415,7 @@ async function searchPodcasts(query) {
             getStatus().textContent = 'No podcasts found.';
         }
     } catch (e) {
+        if (generation !== requestGeneration || !isPodcastPanelOpen()) return;
         console.error('Podcast search error:', e);
         getStatus().textContent = e.message || 'Search failed.';
     }
@@ -375,20 +424,25 @@ async function searchPodcasts(query) {
 // --- Episodes ---
 
 async function loadEpisodes(podcast) {
+    clearTimeout(searchTimeout);
+    const generation = ++requestGeneration;
     currentPodcast = podcast;
+    cachedEpisodes = [];
     addRecentPodcast(podcast);
     setState('EPISODES');
     getStatus().textContent = 'Loading episodes…';
     getList().innerHTML = '';
     try {
         const result = await apiRequest('/episodes/byfeedid', { id: podcast.id, max: 50 });
+        if (generation !== requestGeneration || !isPodcastPanelOpen()) return;
         cachedEpisodes = result.items || [];
         getStatus().textContent = '';
-        renderEpisodes();
+        renderEpisodes(true);
         if (cachedEpisodes.length === 0) {
             getStatus().textContent = 'No episodes found.';
         }
     } catch (e) {
+        if (generation !== requestGeneration || !isPodcastPanelOpen()) return;
         console.error('Episode load error:', e);
         getStatus().textContent = 'Failed to load episodes.';
     }
@@ -403,12 +457,12 @@ const downloadEpisode = createEpisodeDownloader({
     subscribe: (filename, progress) => listen('download-progress', event => {
         if (event.payload.filename === filename) progress(event.payload.percent);
     }),
-    open: async path => { await _handleMP3FilePath(path); closePodcastPanel(); },
+    open: async (path, episode) => { await _handleMP3FilePath(path, episode.podcast); closePodcastPanel(); },
     reportStatus: text => { getStatus().textContent = text; },
 });
 
 async function downloadAndPlay(episode) {
-    try { await downloadEpisode(episode); }
+    try { await downloadEpisode({ ...episode, podcast: episodeMetadata(episode) }); }
     catch (error) {
         console.error('Download error:', error);
         getStatus().textContent = 'Could not open episode: ' + (typeof error === 'string' ? error : error.message);
@@ -419,9 +473,11 @@ async function downloadAndPlay(episode) {
 
 export function initPodcastBrowser(handleMP3FilePath) {
     _handleMP3FilePath = handleMP3FilePath;
+    installPodcastNavigation({ panel: getPanel(), list: getList(), searchInput: getSearchInput() });
 
     getSearchInput().addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
+        requestGeneration++;
         const val = e.target.value.trim();
         if (!val) {
             setState('SEARCH');
@@ -431,10 +487,11 @@ export function initPodcastBrowser(handleMP3FilePath) {
     });
 
     $('podcast-back-btn').addEventListener('click', () => {
+        requestGeneration++;
         if (state === 'EPISODE_DETAIL') {
-            setState('EPISODES');
+            setState('EPISODES', true);
         } else {
-            setState('PODCASTS');
+            setState(cachedPodcasts.length ? 'PODCASTS' : 'SEARCH');
             getSearchInput().parentElement.style.display = '';
             getSearchInput().focus();
         }

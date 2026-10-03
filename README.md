@@ -54,10 +54,21 @@ have not already. The deployed Worker uses the replacement credentials.
 No history rewrite is needed for local development, and no automatic rewrite is
 performed.
 
-Podcast downloads are published to the cache only after a complete download.
-The new `podcast-cache-v2` uses SHA-256 filenames. Old cache files are left
-untouched but are not trusted as complete, because the previous downloader could
-leave partial files behind. Episodes may need downloading again when selected.
+Podcast audio is cached in the app's `podcast-cache-v2` folder after a complete
+download and reused on subsequent plays. New filenames include a shortened show
+and episode title plus a 24-character SHA-256 suffix. Existing downloads with
+64-character hash names are still reused, including when an episode title changes.
+The episode list shows file size and a green checkmark for downloaded audio.
+Pre-v2 cache files remain untouched but are not trusted as complete, because the
+old downloader could leave partial files behind.
+
+Open Recent retains podcast labels as `Show > Episode`, including after restart.
+Old recent-file records still load; older cached episodes gain labels from their
+embedded tags when reopened, or from the directory when selected there. Up and
+Down move through recent podcasts and search results, and Enter opens the focused
+item. Chapter images take priority over embedded cover art, followed by episode
+or show artwork from the directory. Directory artwork may need a connection even
+when the audio is cached.
 
 ## Offline checks
 

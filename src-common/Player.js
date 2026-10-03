@@ -12,6 +12,8 @@ export const MAX_SPEED = 3.0;
 
 function setupKeyboardShortcuts(player, chapters) {
     document.addEventListener('keydown', (e) => {
+        const podcastPanel = document.getElementById('podcast-panel');
+        if (podcastPanel && !podcastPanel.classList.contains('hidden')) return;
         // Ignore shortcuts when typing in an input field
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
             return;
@@ -287,7 +289,7 @@ export function startUp() {
                 if (visibleChapter && visibleChapter.title) {
                     meta.title = visibleChapter.title;
                 } else {
-                    meta.title = window.id3Title || window.currentFilename || '';
+                    meta.title = window.mediaTitle || window.id3Title || window.currentFilename || '';
                 }
                 // Update artwork if chapter has its own image
                 if (visibleChapter && visibleChapter.hasOwnProperty('imageId')) {
