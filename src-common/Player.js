@@ -249,6 +249,10 @@ export function startUp() {
     
     let displayedImage = -1;
     let displayedChapterIndex = -1;
+    player.addEventListener('source-change', () => {
+        displayedImage = -1;
+        displayedChapterIndex = -1;
+    });
     player.addEventListener('time-update', (e) => {
         window.currentTime = e.detail.currentTime * 1000;
         if (chapters.duration != player.state.duration) {

@@ -20,6 +20,9 @@ function selectAndLoadFile() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'audio/*';
+    fileInput.hidden = true;
+    document.body.appendChild(fileInput);
+    fileInput.addEventListener('cancel', () => fileInput.remove());
     fileInput.addEventListener('change', async function () {
         const file = fileInput.files[0];
         if (!file) return;

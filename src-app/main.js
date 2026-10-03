@@ -3,42 +3,62 @@ import 'vidstack/player/layouts';
 import 'vidstack/player/ui';
 
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
+import { open, message } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { getMatches } from '@tauri-apps/plugin-cli';
 import { listen } from '@tauri-apps/api/event';
 
 import { loadFile } from '@common/FileLoader.js';
 import { startUp, toggleShortcutsPanel, goToNextChapter, goToPreviousChapter, SEEK_SECONDS, SPEED_STEP, MIN_SPEED, MAX_SPEED, VOLUME_STEP } from '@common/Player.js';
 import { initPodcastBrowser, togglePodcastPanel } from './PodcastBrowser.js';
 const appWindow = getCurrentWebviewWindow()
+let isDesktop = false;
+let activeBlobUrl;
+let fileLoadQueue = Promise.resolve();
+
+function showFileError(error) {
+    console.error('Could not open audio file:', error);
+    message(typeof error === 'string' ? error : error.message, { title: 'Could not open audio file', kind: 'error' }).catch(console.error);
+}
+
+function requestFileOpen(filePath) {
+    fileLoadQueue = fileLoadQueue.catch(() => {}).then(() => handleMP3FilePath(filePath));
+    return fileLoadQueue;
+}
+
+function audioMimeType(filePath) {
+    const extension = filePath.split('.').pop().toLowerCase();
+    return { ogg: 'audio/ogg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', flac: 'audio/flac' }[extension] || 'audio/mpeg';
+}
 
 async function handleMP3FilePath(filePath) {
     let url;
-    const isFileUri = filePath.startsWith('file://');
+    const isFileUri = /^(file|content):\/\//.test(filePath);
+    const mime = audioMimeType(filePath);
     if (isFileUri) {
         // On mobile, the dialog returns file:// URIs which the asset protocol can't handle;
         // read via fs plugin and create a blob URL instead
         const contents = await readFile(filePath);
-        const blob = new Blob([contents], { type: 'audio/mpeg' });
+        const blob = new Blob([contents], { type: mime });
         url = URL.createObjectURL(blob);
     } else {
         url = convertFileSrc(filePath);
     }
     console.log("Opening file: " + url);
-    player.src = { src: url, type: 'audio/mpeg' };
+    player.src = { src: url, type: mime };
+    if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
+    activeBlobUrl = isFileUri ? url : null;
     const fileName = filePath.split('\\').pop().split('/').pop();
     window.currentFilename = fileName;
     const { id3Title } = await loadFile(player, url, fileName);
     const displayName = id3Title ? `${id3Title} [${fileName}]` : fileName;
-    appWindow.setTitle(displayName);
+    if (isDesktop) await appWindow.setTitle(displayName);
     const filenameChip = document.getElementById('filename-chip');
     filenameChip.textContent = displayName;
     filenameChip.classList.add('visible');
     document.getElementById('welcome-screen')?.classList.add('hidden');
-    if (!isFileUri) {
-        invoke('add_recent_file', { path: filePath });
+    if (isDesktop) {
+        await invoke('add_recent_file', { path: filePath });
     }
 }
 
@@ -49,8 +69,8 @@ listen('tauri://drag-drop', event => {
     // In v2, payload has { paths: string[], position: { x, y } }
     if (payload.paths) {
         for (let file of payload.paths) {
-            if (file.endsWith('.mp3')) {
-                handleMP3FilePath(file);
+            if (/\.(mp3|ogg|m4a|aac|wav|flac)$/i.test(file)) {
+                requestFileOpen(file).catch(showFileError);
                 break;
             }
         }
@@ -63,12 +83,12 @@ async function openFile() {
         multiple: false,
         directory: false,
         filters: [
-            { name: "Audio Files", extensions: ["mp3", "ogg"] },
+            { name: "Audio Files", extensions: ["mp3", "ogg", "m4a", "aac", "wav", "flac"] },
         ],
     });
     console.log(selected);
     if (selected) {
-        handleMP3FilePath(selected);
+        await requestFileOpen(selected);
     }
 }
 
@@ -78,7 +98,7 @@ listen('menu-event', async (event) => {
     console.log('Menu clicked: ' + menuId);
     switch (menuId) {
         case 'open':
-            openFile();
+            openFile().catch(showFileError);
             break;
         case 'open_podcast':
             togglePodcastPanel();
@@ -136,29 +156,24 @@ listen('menu-event', async (event) => {
     }
 });
 
-// Listen for recent file open events from Rust
-listen('open-recent-file', async (event) => {
-    const filePath = event.payload;
-    handleMP3FilePath(filePath);
+// Register before the startup handshake so cold-start Finder events aren't lost.
+const fileListenerReady = listen('open-file', event => {
+    isDesktop = event.payload.desktop;
+    requestFileOpen(event.payload.path).catch(showFileError);
 });
+const errorListenerReady = listen('file-open-error', event => showFileError(event.payload));
 
 const player = document.querySelector("media-player");
 
 startUp();
-initPodcastBrowser(handleMP3FilePath);
+initPodcastBrowser(requestFileOpen);
 
 // Welcome screen buttons
-document.getElementById('welcome-open-file')?.addEventListener('click', () => openFile());
+document.getElementById('welcome-open-file')?.addEventListener('click', () => openFile().catch(showFileError));
 document.getElementById('welcome-open-podcast')?.addEventListener('click', () => togglePodcastPanel());
 window.togglePodcastPanel = togglePodcastPanel;
 
-// reading arguments from the command line
-getMatches().then((matches) => {
-    console.log("Matches:");
-    console.log(matches);
-    window.matches = matches;
-    if (matches.args.filename.value) {
-        console.log(matches.args.filename.value);
-        handleMP3FilePath(matches.args.filename.value);
-    }
-});
+Promise.all([fileListenerReady, errorListenerReady]).then(() => invoke('frontend_ready')).then(async startup => {
+    isDesktop = startup.desktop;
+    for (const filePath of startup.files) await requestFileOpen(filePath);
+}).catch(showFileError);

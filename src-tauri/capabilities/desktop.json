@@ -9,15 +9,13 @@
     "main"
   ],
   "permissions": [
-    "cli:default",
+    "core:default",
     "dialog:default",
     "dialog:allow-open",
     "fs:default",
-    "fs:allow-read",
-    "fs:allow-appdata-write-recursive",
+    "fs:allow-read-file",
     "fs:allow-appdata-read-recursive",
     "fs:allow-exists",
-    "fs:allow-mkdir",
     "shell:default",
     "shell:allow-open",
     "core:window:default",

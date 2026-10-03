@@ -1,8 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
 import { appDataDir, join } from '@tauri-apps/api/path';
-import { mkdir, exists } from '@tauri-apps/plugin-fs';
+import { exists } from '@tauri-apps/plugin-fs';
 import { listen } from '@tauri-apps/api/event';
 import { createPodcastApi } from './PodcastApi.js';
+import { createEpisodeDownloader, getCacheFilename } from './PodcastDownloads.js';
 import { openExternalUrl } from '@common/Links.js';
 
 /* global __PODCAST_PROXY_URL__ */
@@ -211,10 +212,9 @@ function formatDate(timestamp) {
 
 async function getCachePath(enclosureUrl) {
     const dataDir = await appDataDir();
-    const cacheDir = await join(dataDir, 'podcast-cache');
-    const ext = enclosureUrl.split('?')[0].split('.').pop() || 'mp3';
-    const filename = hashString(enclosureUrl) + '.' + ext;
-    return { cacheDir, destPath: await join(cacheDir, filename) };
+    const cacheDir = await join(dataDir, 'podcast-cache-v2');
+    const filename = await getCacheFilename(enclosureUrl);
+    return { filename, destPath: await join(cacheDir, filename) };
 }
 
 async function renderEpisodes() {
@@ -254,7 +254,7 @@ async function renderEpisodes() {
                 exists(destPath).then(cached => {
                     if (cached) metaEl.textContent += ' · ✓ Downloaded';
                 })
-            );
+            ).catch(() => {});
         }
 
         // Info button
@@ -330,7 +330,7 @@ function renderEpisodeDetail() {
             exists(destPath).then(cached => {
                 if (cached) playBtn.textContent = '▶ Play Episode (Downloaded)';
             })
-        );
+        ).catch(() => {});
     }
     playBtn.addEventListener('click', () => downloadAndPlay(ep));
     detail.appendChild(playBtn);
@@ -396,51 +396,22 @@ async function loadEpisodes(podcast) {
 
 // --- Download ---
 
-function hashString(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash |= 0;
-    }
-    return Math.abs(hash).toString(36);
-}
+const downloadEpisode = createEpisodeDownloader({
+    getCachePath,
+    exists,
+    download: (url, filename) => invoke('download_file', { url, filename }),
+    subscribe: (filename, progress) => listen('download-progress', event => {
+        if (event.payload.filename === filename) progress(event.payload.percent);
+    }),
+    open: async path => { await _handleMP3FilePath(path); closePodcastPanel(); },
+    reportStatus: text => { getStatus().textContent = text; },
+});
 
 async function downloadAndPlay(episode) {
-    if (!episode.enclosureUrl) {
-        getStatus().textContent = 'No audio URL available.';
-        return;
-    }
-
-    setState('DOWNLOADING');
-    const status = getStatus();
-
-    const { cacheDir, destPath } = await getCachePath(episode.enclosureUrl);
-
-    if (!(await exists(cacheDir))) {
-        await mkdir(cacheDir, { recursive: true });
-    }
-
-    if (await exists(destPath)) {
-        status.textContent = 'Opening…';
-        closePodcastPanel();
-        _handleMP3FilePath(destPath);
-        return;
-    }
-
-    status.textContent = 'Downloading… 0%';
-    try {
-        const unlisten = await listen('download-progress', (event) => {
-            status.textContent = `Downloading… ${event.payload}%`;
-        });
-        await invoke('download_file', { url: episode.enclosureUrl, dest: destPath });
-        unlisten();
-        status.textContent = 'Opening…';
-        closePodcastPanel();
-        _handleMP3FilePath(destPath);
-    } catch (e) {
-        console.error('Download error:', e);
-        status.textContent = 'Download failed: ' + e.message;
+    try { await downloadEpisode(episode); }
+    catch (error) {
+        console.error('Download error:', error);
+        getStatus().textContent = 'Could not open episode: ' + (typeof error === 'string' ? error : error.message);
     }
 }
 
