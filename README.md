@@ -27,6 +27,10 @@ npm run tauri dev
 excluded. The desktop build uses production JavaScript and a content security
 policy. `npm run web` starts the standalone web version.
 
+The current Vidstack version evaluates its layout queries, so `script-src`
+permits `unsafe-eval` for those expressions. Script files are restricted to app
+assets, and Tauri generates hashes for the app's inline scripts.
+
 ## Podcast search
 
 The app needs the public URL of the proxy described in [worker/README.md](worker/README.md):
