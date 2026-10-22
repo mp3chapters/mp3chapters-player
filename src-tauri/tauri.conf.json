@@ -25,7 +25,7 @@
   },
   "productName": "MP3 Chapter Player",
   "mainBinaryName": "MP3 Chapter Player",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "identifier": "com.mp3chapters.player",
   "plugins": {
     "cli": {
