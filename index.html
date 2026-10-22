@@ -45,9 +45,55 @@
       height: calc(100vh - var(--player-height));
     }
 
-    .vds-slider-chapter-title {
-      padding: var(--media-slider-value-padding, 1px 10px);
-      background-color: white;
+    /* Chapter seek preview */
+    .vds-time-slider .vds-slider-preview {
+      box-sizing: border-box;
+      max-width: min(320px, calc(100vw - 32px), 100%);
+      align-items: flex-start;
+      gap: 4px;
+      padding: 8px 12px;
+      background: var(--chapter-preview-bg, #fff);
+      border: 1px solid var(--chapter-preview-border, #d1d1d1);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+    }
+
+    .vds-time-slider .vds-slider-chapter-title {
+      display: block;
+      max-width: 100%;
+      padding: 0;
+      background: none;
+      color: var(--chapter-preview-title, #1d1d1f);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.4;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .vds-time-slider .vds-slider-chapter-title:empty {
+      display: none;
+    }
+
+    .vds-time-slider .vds-slider-value {
+      margin: 0;
+      padding: 0;
+      background: none;
+      border: none;
+      color: var(--chapter-preview-time, #6e6e73);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.4;
+    }
+
+    .vds-time-slider .vds-slider-preview {
+      --chapter-preview-bg: #1c1c1c;
+      --chapter-preview-border: #444;
+      --chapter-preview-title: #f5f5f5;
+      --chapter-preview-time: #b3b3b3;
     }
 
     .vds-chapters-menu {
@@ -196,15 +242,19 @@
 
     .shortcuts-panel.hidden {
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
     }
 
     .shortcuts-content {
       background: #1c1c1c;
+      color-scheme: dark;
       border-radius: 12px;
-      padding: 24px;
-      max-width: 600px;
-      max-height: 80vh;
+      box-sizing: border-box;
+      width: min(680px, calc(100vw - 32px));
+      padding: 16px;
+      max-height: min(80vh, calc(100dvh - 32px));
+      overflow-x: hidden;
       overflow-y: auto;
       border: 1px solid #444;
     }
@@ -213,7 +263,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       border-bottom: 1px solid #333;
       padding-bottom: 12px;
     }
@@ -221,7 +271,9 @@
     .shortcuts-header h2 {
       margin: 0;
       color: #fff;
-      font-size: 1.3em;
+      font-size: 18px;
+      line-height: 1.4;
+      padding: 0;
       font-weight: 500;
     }
 
@@ -229,9 +281,14 @@
       background: none;
       border: none;
       color: #888;
-      font-size: 1.5em;
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      font-size: 24px;
+      line-height: 1;
       cursor: pointer;
-      padding: 4px 8px;
+      padding: 0;
       border-radius: 4px;
     }
 
@@ -242,28 +299,38 @@
 
     .shortcuts-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px 32px;
     }
 
     .shortcut-section h3 {
       color: #888;
-      font-size: 0.85em;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 0 0 10px 0;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin: 0 0 8px;
     }
 
     .shortcut-row {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr);
+      gap: 12px;
       align-items: center;
-      padding: 6px 0;
+      min-height: 28px;
+      padding: 4px 0;
       color: #ccc;
-      font-size: 0.9em;
+      font-size: 14px;
+      line-height: 1.4;
     }
 
-    .shortcut-row span {
+    .shortcut-keys {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .shortcut-label {
       color: #999;
     }
 
@@ -271,13 +338,21 @@
       background: #333;
       border: 1px solid #555;
       border-radius: 4px;
-      padding: 2px 8px;
+      box-sizing: border-box;
+      padding: 2px 6px;
       font-family: inherit;
-      font-size: 0.85em;
+      font-size: 12px;
+      line-height: 18px;
       color: #fff;
-      min-width: 24px;
+      min-width: 32px;
       text-align: center;
       display: inline-block;
+    }
+
+    @media (max-width: 600px) {
+      .shortcuts-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -287,41 +362,41 @@
   <div id="shortcuts-panel" class="shortcuts-panel hidden">
     <div class="shortcuts-content">
       <div class="shortcuts-header">
-        <h2>Keyboard Shortcuts</h2>
-        <button class="shortcuts-close" onclick="window.toggleShortcutsPanel()">&times;</button>
+        <h2>Keyboard shortcuts</h2>
+        <button class="shortcuts-close" aria-label="Close keyboard shortcuts">&times;</button>
       </div>
       <div class="shortcuts-grid">
         <div class="shortcut-section">
           <h3>Playback</h3>
-          <div class="shortcut-row"><kbd>Space</kbd> or <kbd>K</kbd><span>Play / Pause</span></div>
-          <div class="shortcut-row"><kbd>M</kbd><span>Mute / Unmute</span></div>
-          <div class="shortcut-row"><kbd>Home</kbd><span>Go to beginning</span></div>
-          <div class="shortcut-row"><kbd>End</kbd><span>Go to end</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>Space</kbd><span>or</span><kbd>K</kbd></span><span class="shortcut-label">Play / pause</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>M</kbd></span><span class="shortcut-label">Mute / unmute</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>Home</kbd></span><span class="shortcut-label">Go to beginning</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>End</kbd></span><span class="shortcut-label">Go to end</span></div>
         </div>
         <div class="shortcut-section">
           <h3>Seeking</h3>
-          <div class="shortcut-row"><kbd>&larr;</kbd> or <kbd>J</kbd><span>Rewind 10s</span></div>
-          <div class="shortcut-row"><kbd>&rarr;</kbd> or <kbd>L</kbd><span>Forward 10s</span></div>
-          <div class="shortcut-row"><kbd>0</kbd>-<kbd>9</kbd><span>Jump to 0%-90%</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>&larr;</kbd><span>or</span><kbd>J</kbd></span><span class="shortcut-label">Rewind 10s</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>&rarr;</kbd><span>or</span><kbd>L</kbd></span><span class="shortcut-label">Forward 10s</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>0</kbd><span>–</span><kbd>9</kbd></span><span class="shortcut-label">Jump to 0%-90%</span></div>
         </div>
         <div class="shortcut-section">
           <h3>Volume</h3>
-          <div class="shortcut-row"><kbd>&uarr;</kbd><span>Volume up</span></div>
-          <div class="shortcut-row"><kbd>&darr;</kbd><span>Volume down</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>&uarr;</kbd></span><span class="shortcut-label">Volume up</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>&darr;</kbd></span><span class="shortcut-label">Volume down</span></div>
         </div>
         <div class="shortcut-section">
           <h3>Speed</h3>
-          <div class="shortcut-row"><kbd>[</kbd> or <kbd>,</kbd><span>Slower</span></div>
-          <div class="shortcut-row"><kbd>]</kbd> or <kbd>.</kbd><span>Faster</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>[</kbd><span>or</span><kbd>,</kbd></span><span class="shortcut-label">Slower</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>]</kbd><span>or</span><kbd>.</kbd></span><span class="shortcut-label">Faster</span></div>
         </div>
         <div class="shortcut-section">
           <h3>Chapters</h3>
-          <div class="shortcut-row"><kbd>N</kbd> or <kbd>PgDn</kbd><span>Next chapter</span></div>
-          <div class="shortcut-row"><kbd>P</kbd> or <kbd>PgUp</kbd><span>Previous chapter</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>N</kbd><span>or</span><kbd>PgDn</kbd></span><span class="shortcut-label">Next chapter</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>P</kbd><span>or</span><kbd>PgUp</kbd></span><span class="shortcut-label">Previous chapter</span></div>
         </div>
         <div class="shortcut-section">
           <h3>Help</h3>
-          <div class="shortcut-row"><kbd>?</kbd><span>Toggle this panel</span></div>
+          <div class="shortcut-row"><span class="shortcut-keys"><kbd>?</kbd></span><span class="shortcut-label">Toggle this panel</span></div>
         </div>
       </div>
     </div>
@@ -337,7 +412,7 @@
         </div>
       </div>
     </div>
-    <media-player src="404.mp3" key-target="document">
+    <media-player key-target="document">
       <media-provider></media-provider>
       <media-audio-layout>
       </media-audio-layout>
