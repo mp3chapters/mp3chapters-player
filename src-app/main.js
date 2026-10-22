@@ -15,6 +15,7 @@ const appWindow = getCurrentWebviewWindow()
 let isDesktop = false;
 let activeBlobUrl;
 let fileLoadQueue = Promise.resolve();
+let recentRequest = 0;
 
 function showFileError(error) {
     console.error('Could not open audio file:', error);
@@ -24,6 +25,49 @@ function showFileError(error) {
 function requestFileOpen(filePath, podcast = null) {
     fileLoadQueue = fileLoadQueue.catch(() => {}).then(() => handleMP3FilePath(filePath, podcast));
     return fileLoadQueue;
+}
+
+function renderStartupRecents(files) {
+    const section = document.getElementById('welcome-recent');
+    const list = document.getElementById('welcome-recent-list');
+    list.replaceChildren();
+    for (const file of files.slice(0, 3)) {
+        const podcast = Boolean(file.podcast) || /[\\/]podcast-cache-v2[\\/]/.test(file.path);
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'welcome-recent-item';
+        button.title = file.path;
+        const icon = document.querySelector(podcast ? '#welcome-open-podcast svg' : '#welcome-open-file svg').cloneNode(true);
+        icon.setAttribute('aria-hidden', 'true');
+        icon.setAttribute('focusable', 'false');
+        const name = document.createElement('span');
+        name.className = 'welcome-recent-name';
+        name.textContent = file.label;
+        button.append(icon, name);
+        button.addEventListener('click', () => {
+            const wasFocused = document.activeElement === button;
+            button.disabled = true;
+            requestFileOpen(file.path, file.podcast).then(() => {
+                if (wasFocused && (document.activeElement === button || document.activeElement === document.body)) {
+                    document.querySelector('media-play-button')?.focus();
+                }
+            }).catch(showFileError).finally(() => { button.disabled = false; });
+        });
+        item.appendChild(button);
+        list.appendChild(item);
+    }
+    section.hidden = list.children.length === 0;
+}
+
+async function loadStartupRecents() {
+    const request = ++recentRequest;
+    try {
+        const files = await invoke('get_recent_files');
+        if (request === recentRequest) renderStartupRecents(files);
+    } catch (error) {
+        console.error('Could not load recent files:', error);
+    }
 }
 
 function audioMimeType(filePath) {
@@ -58,7 +102,7 @@ async function handleMP3FilePath(filePath, podcast = null) {
     if (!podcast && /[\\/]podcast-cache-v2[\\/]/.test(filePath)) {
         podcast = { show: album || artist || 'Podcast', title: id3Title || 'Episode', artwork: null };
     }
-    const displayName = podcast ? `${podcast.show} > ${podcast.title}` : id3Title ? `${id3Title} [${fileName}]` : fileName;
+    const displayName = podcast ? `${podcast.show} › ${podcast.title}` : id3Title ? `${id3Title} [${fileName}]` : fileName;
     if (isDesktop) await appWindow.setTitle(displayName);
     const filenameChip = document.getElementById('filename-chip');
     filenameChip.textContent = displayName;
@@ -105,6 +149,10 @@ listen('menu-event', async (event) => {
     const menuId = event.payload;
     console.log('Menu clicked: ' + menuId);
     switch (menuId) {
+        case 'clear_recent':
+            recentRequest++;
+            renderStartupRecents([]);
+            break;
         case 'open':
             openFile().catch(showFileError);
             break;
@@ -184,4 +232,5 @@ window.togglePodcastPanel = togglePodcastPanel;
 Promise.all([fileListenerReady, errorListenerReady]).then(() => invoke('frontend_ready')).then(async startup => {
     isDesktop = startup.desktop;
     for (const filePath of startup.files) await requestFileOpen(filePath);
+    if (isDesktop && !document.getElementById('welcome-screen').classList.contains('hidden')) await loadStartupRecents();
 }).catch(showFileError);

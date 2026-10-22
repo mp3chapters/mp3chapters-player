@@ -62,7 +62,9 @@ The episode list shows file size and a green checkmark for downloaded audio.
 Pre-v2 cache files remain untouched but are not trusted as complete, because the
 old downloader could leave partial files behind.
 
-Open Recent retains podcast labels as `Show > Episode`, including after restart.
+Open Recent retains podcast labels as `Show › Episode`, including after restart.
+The startup screen offers the three most recently opened files or episodes;
+clearing Open Recent also clears this list.
 Old recent-file records still load; older cached episodes gain labels from their
 embedded tags when reopened, or from the directory when selected there. Up and
 Down move through recent podcasts and search results, and Enter opens the focused

@@ -6,7 +6,7 @@ mod open_files;
 #[cfg(desktop)]
 mod recent_files;
 #[cfg(desktop)]
-use recent_files::{PodcastEpisode, RecentFile};
+use recent_files::{PodcastEpisode, RecentFile, RecentFileSummary};
 
 #[cfg(desktop)]
 use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
@@ -389,10 +389,10 @@ fn add_recent_file(
 
 #[cfg(desktop)]
 #[tauri::command]
-fn get_recent_files(app: tauri::AppHandle) -> Vec<RecentFile> {
+fn get_recent_files(app: tauri::AppHandle) -> Vec<RecentFileSummary> {
     let state = app.state::<RecentFiles>();
     let files = state.0.lock().unwrap().clone();
-    files
+    files.into_iter().map(RecentFileSummary::from).collect()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -509,7 +509,6 @@ pub fn run() {
             if let Ok(menu) = build_menu(app, &files) {
                 app.set_menu(menu).ok();
             }
-            return;
         }
 
         // Emit event to JavaScript for all other menu items

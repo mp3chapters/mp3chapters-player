@@ -43,7 +43,7 @@ impl RecentFile {
     pub fn label(&self) -> String {
         if let Some(podcast) = &self.podcast {
             let clean = |value: &str| value.split_whitespace().collect::<Vec<_>>().join(" ");
-            return format!("{} > {}", clean(&podcast.show), clean(&podcast.title));
+            return format!("{} › {}", clean(&podcast.show), clean(&podcast.title));
         }
         let filename = self.path.rsplit(['/', '\\']).next().unwrap_or(&self.path);
         if self.path.replace('\\', "/").contains("/podcast-cache-v2/") {
@@ -53,6 +53,20 @@ impl RecentFile {
             );
         }
         filename.to_owned()
+    }
+}
+
+#[derive(Serialize)]
+pub struct RecentFileSummary {
+    #[serde(flatten)]
+    file: RecentFile,
+    label: String,
+}
+
+impl From<RecentFile> for RecentFileSummary {
+    fn from(file: RecentFile) -> Self {
+        let label = file.label();
+        Self { file, label }
     }
 }
 
@@ -102,7 +116,7 @@ mod tests {
         remember(&mut files, "/audio/local.mp3".into(), None, 2);
         remember(&mut files, "/cache/episode.mp3".into(), None, 2);
         assert_eq!(files.len(), 2);
-        assert_eq!(files[0].label(), "Show Name > Episode title");
+        assert_eq!(files[0].label(), "Show Name › Episode title");
         let saved = serde_json::to_string(&files).unwrap();
         assert_eq!(
             serde_json::from_str::<Vec<RecentFile>>(&saved).unwrap(),

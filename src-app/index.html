@@ -209,11 +209,23 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       position: absolute;
       inset: 0;
-      gap: 16px;
+      box-sizing: border-box;
+      padding: 24px;
+      overflow-y: auto;
       z-index: 5;
+    }
+
+    .welcome-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 100%;
+      gap: 16px;
+      margin: auto 0;
     }
 
     .welcome-screen.hidden {
@@ -228,6 +240,8 @@
 
     .welcome-buttons {
       display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 12px;
     }
 
@@ -257,6 +271,76 @@
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+
+    .welcome-recent {
+      width: min(320px, 100%);
+      margin-top: 24px;
+    }
+
+    .welcome-recent h2 {
+      margin: 0 0 8px;
+      color: #6e6e73;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .welcome-recent-list {
+      display: grid;
+      gap: 2px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .welcome-recent-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px 8px;
+      border: 0;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.025);
+      color: #555;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .welcome-recent-item:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .welcome-recent-item:focus-visible {
+      outline: 2px solid #007aff;
+      outline-offset: 2px;
+    }
+
+    .welcome-recent-item:disabled {
+      opacity: 0.6;
+      cursor: progress;
+    }
+
+    .welcome-recent-item svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .welcome-recent-name {
+      min-width: 0;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      line-height: 1.4;
     }
 
     .filename-chip {
@@ -982,6 +1066,19 @@
         background: rgba(255, 255, 255, 0.15);
       }
 
+      .welcome-recent h2 {
+        color: #b3b3b3;
+      }
+
+      .welcome-recent-item {
+        background: rgba(255, 255, 255, 0.03);
+        color: #bdbdbd;
+      }
+
+      .welcome-recent-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
       #file-info-display { color: #ccc; }
       #file-info-artist, #file-info-album { color: #999; }
 
@@ -1181,6 +1278,10 @@
         overflow: hidden;
       }
 
+      .main-content:has(> .welcome-screen:not(.hidden)) {
+        flex-basis: min(360px, calc(100dvh - var(--player-height)));
+      }
+
       #cover-image {
         flex: 1;
         padding: 0;
@@ -1307,16 +1408,22 @@
       <div class="main-content" data-tauri-drag-region>
         <div class="main-drag-region" data-tauri-drag-region></div>
         <div id="welcome-screen" class="welcome-screen" data-tauri-drag-region>
-          <div class="welcome-hint">Drop an audio file here, or</div>
-          <div class="welcome-buttons">
-            <button class="welcome-btn" id="welcome-open-file">
-              <svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-              Open File
-            </button>
-            <button class="welcome-btn" id="welcome-open-podcast">
-              <svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 00-9 9v7a3 3 0 003 3h2a1 1 0 001-1v-6a1 1 0 00-1-1H6v-2a6 6 0 1112 0v2h-2a1 1 0 00-1 1v6a1 1 0 001 1h2a3 3 0 003-3v-7a9 9 0 00-9-9z"/></svg>
-              Browse Podcasts
-            </button>
+          <div class="welcome-content">
+            <div class="welcome-hint">Drop an audio file here, or</div>
+            <div class="welcome-buttons">
+              <button class="welcome-btn" id="welcome-open-file">
+                <svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                Open File
+              </button>
+              <button class="welcome-btn" id="welcome-open-podcast">
+                <svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 00-9 9v7a3 3 0 003 3h2a1 1 0 001-1v-6a1 1 0 00-1-1H6v-2a6 6 0 1112 0v2h-2a1 1 0 00-1 1v6a1 1 0 001 1h2a3 3 0 003-3v-7a9 9 0 00-9-9z"/></svg>
+                Browse Podcasts
+              </button>
+            </div>
+            <section id="welcome-recent" class="welcome-recent" aria-labelledby="welcome-recent-title" hidden>
+              <h2 id="welcome-recent-title">Recently opened</h2>
+              <ul id="welcome-recent-list" class="welcome-recent-list"></ul>
+            </section>
           </div>
         </div>
         <div id="filename-chip" class="filename-chip" data-tauri-drag-region></div>
