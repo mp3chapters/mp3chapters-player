@@ -1,0 +1,35 @@
+name: Update player website
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published stable release tag to sync (must be the latest release)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  update-website:
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the website's release update
+        env:
+          GH_TOKEN: ${{ secrets.WEBSITE_DISPATCH_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::Set WEBSITE_DISPATCH_TOKEN to a token with Actions: write on mp3chapters/mp3chapters.github.io."
+            exit 1
+          fi
+          gh workflow run update-player-release.yml \
+            --repo mp3chapters/mp3chapters.github.io \
+            --ref master \
+            -f release_tag="$RELEASE_TAG"
+          echo "Website update requested for $RELEASE_TAG." >> "$GITHUB_STEP_SUMMARY"

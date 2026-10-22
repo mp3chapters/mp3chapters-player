@@ -31,6 +31,42 @@ The current Vidstack version evaluates its layout queries, so `script-src`
 permits `unsafe-eval` for those expressions. Script files are restricted to app
 assets, and Tauri generates hashes for the app's inline scripts.
 
+## Releases and website updates
+
+Pushing to `release` builds installers into a draft GitHub release. Bump the app
+version before a new release; the workflow refuses to replace an already
+published version. Both macOS architectures are built explicitly, signed with a
+Developer ID Application certificate, and notarized with App Store Connect. The workflow uses these
+existing repository secrets:
+
+- `APPLE_CERTIFICATE`: base64-encoded signing certificate and private key (`.p12`).
+- `APPLE_CERTIFICATE_PASSWORD`: password for the exported certificate.
+- `APPLE_SIGNING_IDENTITY`: full `Developer ID Application: ...` identity.
+- `KEYCHAIN_PASSWORD`: password for the temporary build keychain.
+- `APPLE_API_ISSUER` and `APPLE_API_KEY`: App Store Connect issuer and key ID.
+- `APPLE_API_PRIVATE_KEY`: the complete PEM contents of the `.p8` private key.
+
+The private key is written to a temporary file for Tauri's `APPLE_API_KEY_PATH`.
+The workflow checks the signature and stapled notarization ticket, and removes
+the temporary certificate, key, and keychain even if the build fails. Apple
+credentials are exposed only to macOS steps. Their contents cannot be verified
+locally; the signed build and verification steps must pass in GitHub Actions.
+
+After all builds succeed, publish the draft to trigger `Update player website`.
+This dispatches `update-player-release.yml` on `master` in
+`mp3chapters/mp3chapters.github.io`. The receiver updates the landing page's
+download links, version, installer sizes, and date from the published release,
+then explicitly requests a GitHub Pages build. Screenshots and descriptive text
+remain manually maintained.
+
+Add `WEBSITE_DISPATCH_TOKEN` to this repo's Actions secrets: a fine-grained token
+scoped to `mp3chapters/mp3chapters.github.io` with **Actions: write**. The normal
+`GITHUB_TOKEN` cannot dispatch workflows in another repo. Both notification and
+receiver workflows must be merged into their default branches before use.
+The website receiver rejects drafts, prereleases, older release tags, and
+missing installers. A failed handoff can be retried from `Update player website`
+using its manual `release_tag` input.
+
 ## Podcast search
 
 The app uses the deployed [Cloudflare proxy](https://mp3chapters-podcast-proxy.mp3chapters.workers.dev)
