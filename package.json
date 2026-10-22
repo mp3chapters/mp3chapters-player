@@ -9,7 +9,7 @@
     "build-worker": "node worker/build.js",
     "web": "webpack serve --config webpack.web.config.js --mode development --open",
     "build-web": "webpack --config webpack.web.config.js",
-    "test": "node --test tests/*.test.js worker/tests/*.test.js"
+    "test": "node --test tests worker/tests"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
