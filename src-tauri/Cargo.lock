@@ -1976,7 +1976,7 @@ dependencies = [
 
 [[package]]
 name = "mp3chapters-player"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "futures-util",
  "reqwest",

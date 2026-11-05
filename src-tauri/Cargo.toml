@@ -1,6 +1,6 @@
 [package]
 name = "mp3chapters-player"
-version = "1.0.0"
+version = "1.0.1"
 description = "A desktop app for playing mp3s with chapter display"
 authors = ["Dominik Peters"]
 license = "MIT"
