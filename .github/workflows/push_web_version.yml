@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
+
+concurrency:
+  group: deploy-web-player
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
@@ -22,9 +28,14 @@ jobs:
         node-version: '20'
 
     - name: Install Dependencies
-      run: npm install
+      run: npm ci
+
+    - name: Test
+      run: npm test
 
     - name: Build
+      env:
+        PODCAST_PROXY_URL: ${{ vars.PODCAST_PROXY_URL || 'https://mp3chapters-podcast-proxy.mp3chapters.workers.dev' }}
       run: npm run build-web
 
     - name: Deploy
@@ -32,3 +43,9 @@ jobs:
       with:
         folder: dist      # The folder the action should deploy.
         branch: gh-pages  # The branch the action should deploy to.
+
+    # GITHUB_TOKEN pushes do not themselves trigger legacy Pages builds.
+    - name: Rebuild GitHub Pages
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"

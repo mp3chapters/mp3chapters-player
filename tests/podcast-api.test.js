@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPodcastApi } from '../src-app/PodcastApi.js';
+import { createPodcastApi } from '../src-common/PodcastApi.js';
 
 test('builds public proxy requests with no embedded auth', async () => {
     const api = createPodcastApi('https://proxy.example/', async (url, options) => {

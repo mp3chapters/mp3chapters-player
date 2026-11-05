@@ -5,25 +5,65 @@ function arrayEquals(a, b) {
         a.every((val, index) => val === b[index]);
 }
 
-export async function loadFile(player, url, filename = 'audiofile', podcast = null) {
-    const response = await fetch(url);
+function checkAbort(signal) {
+    if (signal?.aborted) throw signal.reason || new DOMException('Audio metadata loading was cancelled.', 'AbortError');
+}
+
+function readMetadata(file, signal, metadataTimeoutMs) {
+    return new Promise((resolve, reject) => {
+        let reader;
+        let settled = false;
+        let cancelled = false;
+        const finish = (error, tags) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            signal?.removeEventListener('abort', onAbort);
+            if (error) reject(error);
+            else resolve(tags || {});
+        };
+        const abortRead = error => {
+            cancelled = true;
+            finish(error);
+            try { reader?.abort(); } catch { /* The reader may already have finished. */ }
+        };
+        const onAbort = () => abortRead(signal.reason || new DOMException('Audio metadata loading was cancelled.', 'AbortError'));
+        const timeoutMs = Number.isFinite(metadataTimeoutMs) && metadataTimeoutMs >= 0 ? metadataTimeoutMs : 15000;
+        const timeout = setTimeout(() => abortRead(new Error('Could not read audio metadata. Please try opening the file again.')), timeoutMs);
+        signal?.addEventListener('abort', onAbort, { once: true });
+        if (signal?.aborted) { onAbort(); return; }
+        try {
+            reader = readTags(file, tags => finish(null, tags), error => finish(error || new Error('Could not read audio metadata.')));
+            if (cancelled) reader?.abort();
+        } catch (error) { abortRead(error); }
+    });
+}
+
+export async function loadFile(player, url, filename = 'audiofile', podcast = null, { signal, metadataTimeoutMs = 15000 } = {}) {
+    checkAbort(signal);
+    const response = await fetch(url, { signal });
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
     const blob = await response.blob();
+    checkAbort(signal);
     const file = new File([blob], filename, { type: blob.type || 'audio/mpeg' });
+    const tags = await readMetadata(file, signal, metadataTimeoutMs);
+    checkAbort(signal);
+    return applyMetadata(player, file, filename, podcast, tags);
+}
 
-    window.currentFilename = file.name;
+// Streaming hosts may permit playback while denying JavaScript access to ID3.
+export function loadStream(player, filename, podcast) {
+    return applyMetadata(player, null, filename, podcast, {});
+}
+
+function applyMetadata(player, file, filename, podcast, tags) {
+    window.currentFilename = filename;
     window.currentFile = file;
     window.chapters.duration = -1;
     window.chapterImages = [];
     window.id3Title = null; // Will be set if ID3 title tag exists
-
-    let tags = await new Promise((resolve) => {
-        readTags(file, (fileTags) => {
-            resolve(fileTags);
-        });
-    });
 
     // Extract ID3 title if available
     if (tags.hasOwnProperty('title') && tags.title) {
@@ -75,7 +115,7 @@ export async function loadFile(player, url, filename = 'audiofile', podcast = nu
         }
         window.chapters.duration = player.state.duration;
         window.chapters.setChapters(parsedChapters);
-    } else {
+    } else if (file) {
         const baseChapters = [
             {
                 "title": "Introduction",
@@ -84,6 +124,8 @@ export async function loadFile(player, url, filename = 'audiofile', podcast = nu
             }
         ]
         window.chapters.setChapters(baseChapters);
+    } else {
+        window.chapters.setChapters([]);
     }
 
     if (tags.hasOwnProperty('encodedBy')) {
@@ -109,7 +151,6 @@ export async function loadFile(player, url, filename = 'audiofile', podcast = nu
         showCover();
     } else {
         img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg==";
-        // The web layout uses the cover image as its file picker.
         img.style.display = fileInfoDisplay ? 'none' : '';
         // Show text info instead
         const title = podcast?.title || tags.title || window.currentFilename || '';

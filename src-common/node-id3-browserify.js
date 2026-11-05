@@ -5136,12 +5136,21 @@ function convertUint8ArraysToBuffers(obj) {
 }
 
 // Function to read a file as a buffer
-function readFileAsBuffer(file, callback) {
+function readFileAsBuffer(file, callback, onError) {
     const reader = new FileReader();
-    reader.onload = function (e) {
-        callback(Buffer.from(e.target.result));
+    const fail = error => {
+        if (onError) onError(error);
+        else throw error;
     };
-    reader.readAsArrayBuffer(file);
+    reader.onload = function (e) {
+        try { callback(Buffer.from(e.target.result)); }
+        catch (error) { fail(error); }
+    };
+    reader.onerror = () => fail(reader.error || new Error('Could not read audio file.'));
+    reader.onabort = () => fail(new DOMException('Audio metadata loading was cancelled.', 'AbortError'));
+    try { reader.readAsArrayBuffer(file); }
+    catch (error) { fail(error); }
+    return reader;
 }
 
 // Function to add tags to an MP3 buffer and return a new buffer
@@ -5153,11 +5162,11 @@ function addTags(tags, mp3file, callback) {
     });
 }
 
-function readTags(mp3file, callback) {
-    readFileAsBuffer(mp3file, function (buffer) {
+function readTags(mp3file, callback, onError) {
+    return readFileAsBuffer(mp3file, function (buffer) {
         const tags = NodeID3.read(buffer);
         callback(tags);
-    });
+    }, onError);
 }
 
 window.addTags = addTags;

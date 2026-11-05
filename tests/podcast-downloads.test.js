@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getCacheFilename, getCacheKey, findCachedEpisode, formatFileSize, createEpisodeDownloader } from '../src-app/PodcastDownloads.js';
+import { getCacheFilename, getCacheKey, findCachedEpisode, formatFileSize, createEpisodeDownloader } from '../src-common/PodcastDownloads.js';
 
 test('cache names are stable, collision-resistant, and never contain URL paths', async () => {
     const url = 'https://example.org/audio.MP3?token=first';

@@ -1,0 +1,32 @@
+html, body { background: #ececec; }
+body { height: 100dvh; }
+.web-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #d1d1d1; flex-shrink: 0; }
+.web-toolbar button { display: inline-flex; align-items: center; gap: 7px; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 6px 9px; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.web-toolbar button:hover { background: #00000009; }
+.web-toolbar button:focus-visible { outline: 2px solid #007aff; outline-offset: 2px; }
+.web-toolbar svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.web-toolbar .web-help { margin-left: auto; }
+.web-message { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 16px; font-size: 13px; line-height: 1.5; background: #fff2d5; color: #513900; flex-shrink: 0; }
+.web-message[hidden] { display: none; }
+.web-message a { color: inherit; }
+.web-message button { margin-left: auto; border: none; background: none; color: inherit; font-size: 20px; cursor: pointer; }
+html[data-platform=web] .sidebar-drag-region, html[data-platform=web] .main-drag-region { display: none; }
+html[data-platform=web] .chapter-toc { background: #e6e6e6; }
+html[data-platform=web] .filename-chip { top: 8px; }
+html[data-platform=web] .welcome-content { max-width: 560px; }
+html[data-platform=web] .welcome-hint { text-align: center; }
+html[data-platform=web] .top:has(.welcome-screen:not(.hidden)) .chapter-toc { display: none; }
+html[data-platform=web] .top:has(.welcome-screen:not(.hidden)) .main-content { flex: 1; }
+@media (prefers-color-scheme: dark) {
+    html, body { background: #323232; }
+    .web-toolbar { border-color: #1a1a1a; }
+    .web-toolbar button:hover { background: #ffffff12; }
+    .web-message { background: #493c21; color: #ffe4a3; }
+    html[data-platform=web] .chapter-toc { background: #2a2a2a; }
+}
+@media (max-width: 576px) {
+    html[data-platform=web] .chapter-toc { width: 100% !important; }
+    .web-toolbar { padding: 6px; gap: 2px; }
+    .web-toolbar button { padding: 6px; font-size: 12px; }
+    html[data-platform=web] .filename-chip { top: 4px; }
+}

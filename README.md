@@ -3,7 +3,8 @@
 A simple desktop application to play MP3 files with chapters.
 
 The app uses Tauri v2, with desktop menus, file associations, recent files, and a
-Podcast Index browser. The web version shares its chapter parser and player.
+Podcast Index browser. The web version shares its interface, podcast browser,
+chapter parser, and player with the native app.
 
 ## Development
 
@@ -26,6 +27,24 @@ npm run tauri dev
 `dist-app/` is embedded in the native app; source files and local credentials are
 excluded. The desktop build uses production JavaScript and a content security
 policy. `npm run web` starts the standalone web version.
+
+The shared layout lives in `src-common/player.html`; platform-specific entry
+points handle native file access or browser file picking and storage. The web
+app uses the same public podcast directory proxy without embedding API keys.
+CORS-enabled episodes are downloaded for chapter parsing and saved in IndexedDB
+when storage is available. The cache retains at most eight audio files and
+512 MiB, evicting the oldest saves first. Browser quotas or storage being disabled
+do not prevent playback. Recent local files stay on the device and are never
+uploaded. The browser can clear saved audio; this is not an offline app install.
+
+When a podcast host denies browser access to audio bytes, the web player tries
+direct streaming and explains why embedded chapters and saved audio are
+unavailable. Users can download the file from its host and open it locally for
+chapter support. HTTP-only episode URLs cannot play from the HTTPS web app.
+
+Pushes to `master` build and deploy the web player to GitHub Pages. The workflow
+also explicitly requests a Pages build after updating `gh-pages`; deployments
+are serialized, and build URLs include the source commit to avoid stale scripts.
 
 The current Vidstack version evaluates its layout queries, so `script-src`
 permits `unsafe-eval` for those expressions. Script files are restricted to app

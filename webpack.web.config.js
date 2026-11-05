@@ -1,12 +1,14 @@
 import path from 'path';
+import webpack from 'webpack';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import appConfig from './webpack.tauri.config.js';
 
 export default {
     entry: './src-web/main-web.js',
     output: {
         filename: 'main.js',
         path: path.resolve('dist'),
-        chunkFilename: '[name].bundle.js',
+        chunkFilename: '[name].[contenthash].bundle.js',
         clean: true,
     },
     devServer: {
@@ -27,19 +29,20 @@ export default {
         ],
     },
     plugins: [
+        new webpack.DefinePlugin({
+            __PODCAST_PROXY_URL__: JSON.stringify(process.env.PODCAST_PROXY_URL ?? 'https://mp3chapters-podcast-proxy.mp3chapters.workers.dev'),
+            __WEB_VERSION__: JSON.stringify(process.env.GITHUB_SHA || 'development'),
+        }),
         new CopyWebpackPlugin({
             patterns: [
-                { from: 'src-web/index.html', to: 'index.html' },
-                // { from: 'src-web/example.mp3', to: 'example.mp3' },
-                // { from: 'src-web/silence.mp3', to: 'silence.mp3' },
-                { from: 'src-web/instruction.svg', to: 'instruction.svg' },
-                { from: 'src-web/vidstack', to: 'vidstack', globOptions: { ignore: ['**/.DS_Store'] } },
+                { from: 'src-common/player.html', to: 'index.html', transform: content => content.toString()
+                    .replace('<html lang="en">', '<html lang="en" data-platform="web">')
+                    .replace('src="main.js"', `src="main.js?v=${process.env.GITHUB_SHA || 'development'}"`)
+                    .replace('</head>', '<link rel="stylesheet" href="web.css" />\n</head>') },
+                { from: 'src-web/web.css', to: 'web.css' },
+                { from: 'src-common/vidstack', to: 'vidstack', globOptions: { ignore: ['**/.DS_Store'] } },
             ],
         }),
     ],
-    resolve: {
-        alias: {
-            '@common': path.resolve('src-common/'),
-        },
-    },
+    resolve: appConfig.resolve,
 };

@@ -44,8 +44,8 @@ export default {
             __PODCAST_PROXY_URL__: JSON.stringify(proxyUrl),
         }),
         new CopyWebpackPlugin({ patterns: [
-            { from: 'src-app/index.html', to: 'index.html' },
-            { from: 'src-app/vidstack', to: 'vidstack', globOptions: { ignore: ['**/.DS_Store'] } },
+            { from: 'src-common/player.html', to: 'index.html' },
+            { from: 'src-common/vidstack', to: 'vidstack', globOptions: { ignore: ['**/.DS_Store'] } },
         ] }),
     ],
 };
