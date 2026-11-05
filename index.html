@@ -1,48 +1,463 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-platform="web">
 
 <head>
   <meta charset="UTF-8" />
   <!-- <link rel="stylesheet" href="styles.css" /> -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>MP3 Chapter Player</title>
-  <script type="module" src="main.js"></script>
+  <script type="module" src="main.js?v=884eb13a69786f4230b34e1b0fda659a1442a745"></script>
   <link rel="stylesheet" href="vidstack/theme.min.css" />
   <link rel="stylesheet" href="vidstack/audio.min.css" />
   <style>
     html,
     body {
       overscroll-behavior: none;
-      background-color: #000;
-      font-family: var(--media-font-family, sans-serif);
+      background-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       box-sizing: border-box;
+      color: #1d1d1f;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     body {
       padding: 0;
       margin: 0;
-      --player-height: 80px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      --player-height: 72px;
+      --sidebar-width: 240px;
+      --titlebar-height: 24px;
     }
 
-    /* media player should be at the bottom of the container */
     .container {
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      height: 100vh;
+      flex: 1;
+      min-height: 0;
       margin: 0;
+      padding-top: env(safe-area-inset-top);
     }
 
-    media-player {
+    :where([data-can-seek] .vds-audio-layout[data-size=sm] .vds-controls-group:last-child) {
+      margin-bottom: calc(max(env(safe-area-inset-bottom) - 8px, 8px));
+    }
+
+    .top {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Sidebar */
+    .chapter-toc {
+      width: var(--sidebar-width);
+      min-width: 180px;
+      max-width: 50vw;
+      background-color: transparent;
+      border-right: 1px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+
+    .sidebar-resize-handle {
+      position: absolute;
+      top: 0;
+      right: -3px;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 10;
+    }
+
+    .sidebar-drag-region {
+      height: var(--titlebar-height);
+      min-height: var(--titlebar-height);
+      -webkit-app-region: drag;
+    }
+
+    .chapter-toc-list {
+      display: flex;
+      flex-direction: column;
+      padding: 4px 8px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      gap: 1px;
+    }
+
+    .chapter-toc-item {
+      --toc-item-background-color: transparent;
+      --toc-progress-color: rgba(0, 0, 0, 0.06);
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 6px 8px;
+      color: #1d1d1f;
+      border-radius: 6px;
+      background-color: var(--toc-item-background-color);
+      cursor: pointer;
+      border: none;
+    }
+
+    .chapter-toc-item:hover {
+      --toc-item-background-color: rgba(0, 0, 0, 0.05);
+      --toc-progress-color: rgba(0, 0, 0, 0.09);
+    }
+
+    .chapter-toc-item:active {
+      --toc-item-background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .chapter-toc-item.current-toc-item {
+      --toc-item-background-color: rgba(0, 122, 255, 0.08);
+      --toc-progress-color: rgba(0, 122, 255, 0.18);
+    }
+
+    .chapter-toc-item.current-toc-item:hover {
+      --toc-item-background-color: rgba(0, 122, 255, 0.12);
+      --toc-progress-color: rgba(0, 122, 255, 0.22);
+    }
+
+    .chapter-toc-item.current-toc-item:active {
+      --toc-item-background-color: rgba(0, 122, 255, 0.2);
+    }
+
+    .chapter-toc-image {
+      min-width: 44px;
+      width: 44px;
+      height: 44px;
+      margin-right: 10px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    div.chapter-toc-image {
+      background-color: rgba(0, 0, 0, 0.06);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.85em;
+      color: #999;
+    }
+
+    .chapter-toc-item-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .chapter-toc-item-title {
+      font-size: 0.8em;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chapter-toc-item-time {
+      float: right;
+      background: rgba(0, 0, 0, 0.08);
+      color: #666;
+      padding: 1px 5px;
+      margin-left: 4px;
+      border-radius: 3px;
+      font-size: 0.7em;
+      font-weight: 400;
+    }
+
+    .chapter-toc-item-duration {
+      margin-top: 2px;
+      font-size: 0.7em;
+      color: #888;
+    }
+
+    .chapter-toc-item-link {
+      font-size: 0.7em;
+      color: #0066cc;
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chapter-toc-item-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Main content area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background-color: rgba(236, 236, 236, 0.7);
+      position: relative;
+      cursor: default;
+    }
+
+    /* Welcome screen (empty state) */
+    .welcome-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      position: absolute;
+      inset: 0;
+      box-sizing: border-box;
+      padding: 24px;
+      overflow-y: auto;
+      z-index: 5;
+    }
+
+    .welcome-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 100%;
+      gap: 16px;
+      margin: auto 0;
+    }
+
+    .welcome-screen.hidden {
+      display: none;
+    }
+
+    .welcome-hint {
+      font-size: 0.85em;
+      color: #999;
+      margin-bottom: 4px;
+    }
+
+    .welcome-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .welcome-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.6);
+      color: #333;
+      font-size: 0.85em;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .welcome-btn:hover {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .welcome-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .welcome-recent {
+      width: min(320px, 100%);
+      margin-top: 24px;
+    }
+
+    .welcome-recent h2 {
+      margin: 0 0 8px;
+      color: #6e6e73;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .welcome-recent-list {
+      display: grid;
+      gap: 2px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .welcome-recent-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px 8px;
       border: 0;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.025);
+      color: #555;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .welcome-recent-item:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .welcome-recent-item:focus-visible {
+      outline: 2px solid #007aff;
+      outline-offset: 2px;
+    }
+
+    .welcome-recent-item:disabled {
+      opacity: 0.6;
+      cursor: progress;
+    }
+
+    .welcome-recent-item svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .welcome-recent-name {
+      min-width: 0;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .filename-chip {
+      display: none;
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.08);
+      color: #333;
+      font-size: 0.75em;
+      padding: 4px 10px;
+      border-radius: 12px;
+      max-width: 70%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .filename-chip.visible {
+      display: block;
+    }
+
+    .chapter-url-chip {
+      display: none;
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.08);
+      color: #333;
+      font-size: 0.75em;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-decoration: none;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chapter-url-chip:hover {
+      background: rgba(0, 0, 0, 0.14);
+      text-decoration: underline;
+    }
+
+    .chapter-url-chip.visible {
+      display: block;
+    }
+
+    .main-drag-region {
+      height: var(--titlebar-height);
+      min-height: var(--titlebar-height);
+      -webkit-app-region: drag;
     }
 
     #cover-image {
       object-fit: contain;
       flex: 1;
-      width: 100px;
-      height: calc(100vh - var(--player-height));
+      min-height: 0;
+      width: 100%;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    #file-info-display {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      padding: 32px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #444;
+      overflow: hidden;
+    }
+
+    #file-info-title {
+      font-size: 1.4em;
+      font-weight: 600;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    #file-info-artist, #file-info-album {
+      font-size: 1.1em;
+      color: #777;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    /* Player bar */
+    media-player {
+      border: 0;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      background: rgba(246, 246, 246, 0.7);
+
+      --media-brand: #333;
+      --media-focus-ring-color: #0066cc;
+      --media-controls-color: hsl(300, 3%, 20%);
+      --media-button-color: hsl(240, 3%, 20%);
+      --media-button-hover-bg: rgba(0, 0, 0, 0.08);
+      --media-button-touch-hover-bg: rgba(0, 0, 0, 0.08);
+      --media-chapter-title-color: rgba(0, 0, 0, 0.5);
+      --media-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --media-slider-track-bg: rgba(0, 0, 0, 0.25);
+      --media-slider-track-fill-bg: #1d1d1f;
+      --audio-bg: rgba(246, 246, 246, 0.7);
+      --audio-border-radius: 0;
+      --media-time-color: #1d1d1f;
+      color: #1d1d1f;
     }
 
     /* Chapter seek preview */
@@ -89,139 +504,8 @@
       line-height: 1.4;
     }
 
-    .vds-time-slider .vds-slider-preview {
-      --chapter-preview-bg: #1c1c1c;
-      --chapter-preview-border: #444;
-      --chapter-preview-title: #f5f5f5;
-      --chapter-preview-time: #b3b3b3;
-    }
-
     .vds-chapters-menu {
       display: none !important;
-    }
-
-    .top {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: flex-end;
-      width: 100vw;
-      height: calc(100vh - var(--player-height));
-      flex: 1;
-    }
-
-    .chapter-toc {
-      width: 340px;
-      min-width: 340px;
-      height: calc(100vh - var(--player-height));
-      padding: 10px 0;
-    }
-
-    .chapter-toc-list {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-      padding: 10px;
-      height: calc(100vh - var(--player-height));
-      overflow-y: scroll;
-    }
-
-    .chapter-toc-item {
-      --toc-item-background-color: #1c1c1c;
-      --toc-progress-color: #3d3d3d;
-      margin: 4px 0;
-      position: relative;
-      display: flex;
-      flex-direction: row;
-      padding: 10px;
-      width: 300px;
-      color: white;
-      border: 1px solid #666;
-      background-color: var(--toc-item-background-color);
-      cursor: pointer;
-    }
-
-    .chapter-toc-item:hover {
-      --toc-item-background-color: #333;
-      border: 1px solid #999;
-    }
-
-    .chapter-toc-item:active {
-      --toc-item-background-color: #666;
-      border: 1px solid #fff;
-      transform: scale(0.98);
-    }
-
-    .chapter-toc-item.current-toc-item {
-      --toc-item-background-color: #2c2c2c;
-      border: 1px solid #999;
-      transform: scale(1.02);
-    }
-
-    .chapter-toc-item.current-toc-item:hover {
-      --toc-item-background-color: #444;
-    }
-
-    .chapter-toc-item.current-toc-item:active {
-      --toc-item-background-color: #666;
-      border: 1px solid #fff;
-      transform: scale(0.99);
-    }
-
-    .chapter-toc-image {
-      min-width: 65px;
-      width: 65px;
-      height: 65px;
-      margin-right: 10px;
-      object-fit: contain;
-    }
-
-    div.chapter-toc-image {
-      background-color: #00000090;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 1em;
-      color: #bbb;
-    }
-
-    .chapter-toc-item-text {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-    }
-
-    .chapter-toc-item-title {
-      font-size: 0.9em;
-      min-width: 225px;
-    }
-
-    .chapter-toc-item-time {
-      float: right;
-      background: #333;
-      color: #ddd;
-      padding: 2px 5px;
-      margin-left: 2px;
-      border-radius: 4px;
-      font-size: 0.75em;
-    }
-
-    .chapter-toc-item-duration {
-      margin-top: 3px;
-      font-size: 0.75em;
-      color: #bbb;
-    }
-
-    .chapter-toc-item-link {
-      font-size: 0.75em;
-      color: #4f91ff;
-      text-decoration: none;
-      max-width: 225px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     /* Keyboard Shortcuts Panel */
@@ -231,7 +515,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.4);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -247,8 +531,7 @@
     }
 
     .shortcuts-content {
-      background: #1c1c1c;
-      color-scheme: dark;
+      background: #fff;
       border-radius: 12px;
       box-sizing: border-box;
       width: min(680px, calc(100vw - 32px));
@@ -256,7 +539,8 @@
       max-height: min(80vh, calc(100dvh - 32px));
       overflow-x: hidden;
       overflow-y: auto;
-      border: 1px solid #444;
+      border: 1px solid #d1d1d1;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     }
 
     .shortcuts-header {
@@ -264,17 +548,17 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid #e5e5e5;
       padding-bottom: 12px;
     }
 
     .shortcuts-header h2 {
       margin: 0;
-      color: #fff;
+      color: #1d1d1f;
       font-size: 18px;
       line-height: 1.4;
       padding: 0;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     .shortcuts-close {
@@ -293,8 +577,8 @@
     }
 
     .shortcuts-close:hover {
-      background: #333;
-      color: #fff;
+      background: #f0f0f0;
+      color: #333;
     }
 
     .shortcuts-grid {
@@ -304,7 +588,7 @@
     }
 
     .shortcut-section h3 {
-      color: #888;
+      color: #666;
       font-size: 14px;
       font-weight: 600;
       line-height: 1.4;
@@ -318,7 +602,7 @@
       align-items: center;
       min-height: 28px;
       padding: 4px 0;
-      color: #ccc;
+      color: #333;
       font-size: 14px;
       line-height: 1.4;
     }
@@ -331,19 +615,19 @@
     }
 
     .shortcut-label {
-      color: #999;
+      color: #666;
     }
 
     kbd {
-      background: #333;
-      border: 1px solid #555;
+      background: #f0f0f0;
+      border: 1px solid #d1d1d1;
       border-radius: 4px;
       box-sizing: border-box;
       padding: 2px 6px;
       font-family: inherit;
       font-size: 12px;
       line-height: 18px;
-      color: #fff;
+      color: #333;
       min-width: 32px;
       text-align: center;
       display: inline-block;
@@ -354,7 +638,708 @@
         grid-template-columns: 1fr;
       }
     }
+    /* Podcast Browser Panel */
+    .podcast-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: min(15vh, 100px);
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.15s ease;
+    }
+
+    .podcast-panel.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .podcast-content {
+      background: #f0efed;
+      border-radius: 10px;
+      width: 90vw;
+      max-width: 560px;
+      max-height: 65vh;
+      display: flex;
+      flex-direction: column;
+      border: 0.5px solid rgba(0, 0, 0, 0.15);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .podcast-search {
+      padding: 10px 12px;
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .podcast-search-icon {
+      color: #999;
+      flex-shrink: 0;
+    }
+
+    .podcast-search input {
+      width: 100%;
+      padding: 0;
+      border: none;
+      background: transparent;
+      font-size: 1.05em;
+      font-family: inherit;
+      outline: none;
+      box-sizing: border-box;
+      color: #1d1d1f;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .podcast-search input::placeholder {
+      color: #999;
+    }
+
+    .podcast-nav-bar {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-bottom: 0.5px solid rgba(0, 0, 0, 0.1);
+      gap: 6px;
+    }
+
+    .podcast-nav-bar button {
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      font-size: 0.8em;
+      font-family: inherit;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .podcast-nav-bar button:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: #333;
+    }
+
+    .podcast-nav-title {
+      font-size: 0.8em;
+      font-weight: 500;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+
+    .podcast-section-label {
+      padding: 8px 16px 4px;
+      font-size: 0.7em;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .podcast-list {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding: 4px 6px;
+    }
+
+    .podcast-item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      gap: 10px;
+    }
+
+    .podcast-item:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .podcast-item:focus-within {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .podcast-item-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      border: none;
+      border-radius: 4px;
+      background: none;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .podcast-item-main:focus-visible {
+      outline: 2px solid #007aff;
+      outline-offset: 3px;
+    }
+
+    .podcast-cached {
+      flex-shrink: 0;
+      color: #248440;
+      font-weight: 600;
+    }
+
+    .podcast-item:active {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .podcast-item img {
+      width: 36px;
+      height: 36px;
+      border-radius: 5px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .podcast-episode-item img {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+    }
+
+    .podcast-item-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .podcast-item-title {
+      display: block;
+      font-size: 0.85em;
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #1d1d1f;
+    }
+
+    .podcast-item-author {
+      display: block;
+      font-size: 0.75em;
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .podcast-item .podcast-item-remove {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 1.1em;
+      padding: 2px 4px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .podcast-item:hover .podcast-item-remove,
+    .podcast-item:focus-within .podcast-item-remove {
+      opacity: 1;
+    }
+
+    .podcast-item .podcast-item-remove:hover {
+      color: #666;
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .podcast-item-info {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .podcast-item:hover .podcast-item-info,
+    .podcast-item:focus-within .podcast-item-info {
+      opacity: 1;
+    }
+
+    .podcast-item-info:hover {
+      color: #666;
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .podcast-episode-detail {
+      padding: 12px 16px;
+    }
+
+    .podcast-episode-detail-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .podcast-episode-detail-header img {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .podcast-episode-detail-header-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .podcast-episode-detail-title {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 4px;
+    }
+
+    .podcast-episode-detail-play {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.08);
+      color: #1d1d1f;
+      font-size: 0.85em;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+
+    .podcast-episode-detail-play:hover {
+      background: rgba(0, 0, 0, 0.13);
+    }
+
+    .podcast-episode-detail-play:active {
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .podcast-episode-detail-meta {
+      font-size: 0.75em;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .podcast-episode-detail-desc {
+      font-size: 0.8em;
+      color: #555;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .podcast-powered-by {
+      text-align: center;
+      font-size: 0.7em;
+      color: #aaa;
+      padding: 12px 0;
+    }
+
+    .podcast-powered-by a {
+      color: #999;
+      text-decoration: none;
+    }
+
+    .podcast-powered-by a:hover {
+      text-decoration: underline;
+      color: #666;
+    }
+
+    .podcast-status {
+      text-align: center;
+      color: #888;
+      font-size: 0.8em;
+      padding: 10px 0;
+    }
+
+    .podcast-status:empty {
+      display: none;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      html, body {
+        background-color: #323232;
+        color: #e5e5e5;
+        color-scheme: dark;
+      }
+
+      /* Sidebar */
+      .chapter-toc {
+        background-color: #2a2a2a;
+        border-right-color: #1a1a1a;
+      }
+
+      .chapter-toc-item {
+        color: #e5e5e5;
+        --toc-progress-color: rgba(255, 255, 255, 0.06);
+      }
+
+      .chapter-toc-item:hover {
+        --toc-item-background-color: rgba(255, 255, 255, 0.08);
+        --toc-progress-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .chapter-toc-item:active {
+        --toc-item-background-color: rgba(255, 255, 255, 0.14);
+      }
+
+      .chapter-toc-item.current-toc-item {
+        --toc-item-background-color: rgba(10, 132, 255, 0.12);
+        --toc-progress-color: rgba(10, 132, 255, 0.28);
+      }
+
+      .chapter-toc-item.current-toc-item:hover {
+        --toc-item-background-color: rgba(10, 132, 255, 0.18);
+        --toc-progress-color: rgba(10, 132, 255, 0.34);
+      }
+
+      .chapter-toc-item.current-toc-item:active {
+        --toc-item-background-color: rgba(10, 132, 255, 0.24);
+      }
+
+      div.chapter-toc-image {
+        background-color: rgba(255, 255, 255, 0.08);
+        color: #888;
+      }
+
+      .chapter-toc-item-time {
+        background: rgba(255, 255, 255, 0.1);
+        color: #aaa;
+      }
+
+      .chapter-toc-item-duration {
+        color: #888;
+      }
+
+      .chapter-toc-item-link {
+        color: #4da3ff;
+      }
+
+      /* Main content */
+      .main-content {
+        background-color: rgba(50, 50, 50, 0.7);
+      }
+
+      .filename-chip {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ccc;
+      }
+
+      .chapter-url-chip {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ccc;
+      }
+
+      .chapter-url-chip:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .welcome-hint { color: #777; }
+      .welcome-btn {
+        border-color: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.08);
+        color: #ccc;
+      }
+      .welcome-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .welcome-recent h2 {
+        color: #b3b3b3;
+      }
+
+      .welcome-recent-item {
+        background: rgba(255, 255, 255, 0.03);
+        color: #bdbdbd;
+      }
+
+      .welcome-recent-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      #file-info-display { color: #ccc; }
+      #file-info-artist, #file-info-album { color: #999; }
+
+      /* Player bar */
+      media-player {
+        border-top-color: rgba(255, 255, 255, 0.1);
+        background: rgba(42, 42, 42, 0.7);
+        --media-brand: #ccc;
+        --media-controls-color: #ddd;
+        --media-button-color: #ddd;
+        --media-button-hover-bg: rgba(255, 255, 255, 0.1);
+        --media-button-touch-hover-bg: rgba(255, 255, 255, 0.1);
+        --media-chapter-title-color: rgba(255, 255, 255, 0.5);
+        --media-slider-track-bg: rgba(255, 255, 255, 0.2);
+        --media-slider-track-fill-bg: #e5e5e5;
+        --audio-bg: rgba(42, 42, 42, 0.7);
+        --audio-controls-color: #ddd;
+        --audio-brand: #ccc;
+        --media-time-color: #e5e5e5;
+        color: #e5e5e5;
+      }
+
+      .vds-time-slider .vds-slider-preview {
+        --chapter-preview-bg: #323232;
+        --chapter-preview-border: #555;
+        --chapter-preview-title: #e5e5e5;
+        --chapter-preview-time: #b3b3b3;
+      }
+
+      /* Shortcuts panel */
+      .shortcuts-content {
+        background: #323232;
+        border-color: #1a1a1a;
+      }
+
+      .shortcuts-header {
+        border-bottom-color: #444;
+      }
+
+      .shortcuts-header h2 {
+        color: #e5e5e5;
+      }
+
+      .shortcut-section h3 {
+        color: #b3b3b3;
+      }
+
+      .shortcuts-close {
+        color: #888;
+      }
+
+      .shortcuts-close:hover {
+        background: #3a3a3a;
+        color: #ccc;
+      }
+
+      .shortcut-row {
+        color: #ccc;
+      }
+
+      .shortcut-label {
+        color: #999;
+      }
+
+      kbd {
+        background: #3a3a3a;
+        border-color: #555;
+        color: #ccc;
+      }
+
+      /* Podcast browser panel */
+      .podcast-content {
+        background: #2a2a2a;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-search {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-search input {
+        color: #e5e5e5;
+      }
+
+      .podcast-search input::placeholder {
+        color: #777;
+      }
+
+      .podcast-nav-bar {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-nav-bar button {
+        color: #999;
+      }
+
+      .podcast-nav-bar button:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ccc;
+      }
+
+      .podcast-nav-title {
+        color: #ccc;
+      }
+
+      .podcast-item:hover,
+      .podcast-item:focus-within {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .podcast-cached {
+        color: #69cf87;
+      }
+
+      .podcast-item:active {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .podcast-item-title {
+        color: #e5e5e5;
+      }
+
+      .podcast-item .podcast-item-remove {
+        color: #777;
+      }
+
+      .podcast-item .podcast-item-remove:hover {
+        color: #ccc;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-item-info {
+        color: #777;
+      }
+
+      .podcast-item-info:hover {
+        color: #ccc;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .podcast-episode-detail-title {
+        color: #e5e5e5;
+      }
+
+      .podcast-episode-detail-play {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e5e5e5;
+      }
+
+      .podcast-episode-detail-play:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .podcast-episode-detail-play:active {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .podcast-episode-detail-desc {
+        color: #aaa;
+      }
+    }
+
+    /* Vertical layout for narrow windows */
+    @media (max-width: 576px) {
+      .top {
+        flex-direction: column;
+      }
+
+      .chapter-toc {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        border-right: none;
+        border-bottom: 1px solid #d1d1d1;
+        height: auto;
+        flex: 1;
+        min-height: 0;
+        order: 2;
+      }
+
+      .sidebar-drag-region {
+        display: none;
+      }
+
+      .sidebar-resize-handle {
+        top: -3px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 6px;
+        cursor: row-resize;
+      }
+
+      .main-content {
+        order: 1;
+        flex: 0 0 200px;
+        overflow: hidden;
+      }
+
+      .main-content:has(> .welcome-screen:not(.hidden)) {
+        flex-basis: min(360px, calc(100dvh - var(--player-height)));
+      }
+
+      #cover-image {
+        flex: 1;
+        padding: 0;
+      }
+
+      .main-drag-region {
+        height: 0;
+        min-height: 0;
+      }
+
+      .filename-chip {
+        top: 4px;
+        background: rgba(255, 255, 255, 0.5);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        color: #1d1d1f;
+      }
+
+      .chapter-url-chip {
+        bottom: 4px;
+        right: 8px;
+        background: rgba(255, 255, 255, 0.5);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        color: #1d1d1f;
+      }
+
+      .chapter-url-chip:hover {
+        background: rgba(255, 255, 255, 0.7);
+      }
+    }
+
+    @media (max-width: 576px) and (prefers-color-scheme: dark) {
+      .chapter-toc {
+        border-bottom-color: #1a1a1a;
+      }
+
+      .filename-chip {
+        background: rgba(0, 0, 0, 0.4);
+        color: #ccc;
+      }
+
+      .chapter-url-chip {
+        background: rgba(0, 0, 0, 0.4);
+        color: #ccc;
+      }
+
+      .chapter-url-chip:hover {
+        background: rgba(0, 0, 0, 0.55);
+      }
+    }
   </style>
+<link rel="stylesheet" href="web.css" />
 </head>
 
 <body>
@@ -402,22 +1387,102 @@
     </div>
   </div>
 
+  <!-- Podcast Browser Panel -->
+  <div id="podcast-panel" class="podcast-panel hidden" role="dialog" aria-modal="true" aria-label="Browse podcasts" aria-hidden="true">
+    <div class="podcast-content">
+      <div class="podcast-search">
+        <svg class="podcast-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="podcast-search-input" placeholder="Search podcasts…" />
+      </div>
+      <div id="podcast-nav-bar" class="podcast-nav-bar" style="display:none">
+        <button id="podcast-back-btn">‹</button>
+        <span id="podcast-nav-title" class="podcast-nav-title"></span>
+      </div>
+      <div id="podcast-list" class="podcast-list"></div>
+      <div id="podcast-status" class="podcast-status"></div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="top">
-      <img
-        src="instruction.svg"
-        id="cover-image">
-      <div class="chapter-toc">
+      <div class="chapter-toc" id="sidebar">
+        <div class="sidebar-drag-region" data-tauri-drag-region></div>
         <div class="chapter-toc-list">
+        </div>
+        <div class="sidebar-resize-handle" id="sidebar-resize-handle"></div>
+      </div>
+      <div class="main-content" data-tauri-drag-region>
+        <div class="main-drag-region" data-tauri-drag-region></div>
+        <div id="welcome-screen" class="welcome-screen" data-tauri-drag-region>
+          <div class="welcome-content">
+            <div class="welcome-hint">Drop an audio file here, or</div>
+            <div class="welcome-buttons">
+              <button class="welcome-btn" id="welcome-open-file">
+                <svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                Open File
+              </button>
+              <button class="welcome-btn" id="welcome-open-podcast">
+                <svg viewBox="0 0 24 24"><path d="M12 1a9 9 0 00-9 9v7a3 3 0 003 3h2a1 1 0 001-1v-6a1 1 0 00-1-1H6v-2a6 6 0 1112 0v2h-2a1 1 0 00-1 1v6a1 1 0 001 1h2a3 3 0 003-3v-7a9 9 0 00-9-9z"/></svg>
+                Browse Podcasts
+              </button>
+            </div>
+            <section id="welcome-recent" class="welcome-recent" aria-labelledby="welcome-recent-title" hidden>
+              <h2 id="welcome-recent-title">Recently opened</h2>
+              <ul id="welcome-recent-list" class="welcome-recent-list"></ul>
+            </section>
+          </div>
+        </div>
+        <div id="filename-chip" class="filename-chip" data-tauri-drag-region></div>
+        <a id="chapter-url-chip" class="chapter-url-chip" target="_blank" href="#">Link</a>
+        <img
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAABJRU5ErkJggg=="
+          id="cover-image"
+          data-tauri-drag-region>
+        <div id="file-info-display" style="display:none;" data-tauri-drag-region>
+          <div id="file-info-title"></div>
+          <div id="file-info-artist"></div>
+          <div id="file-info-album"></div>
         </div>
       </div>
     </div>
-    <media-player key-target="document">
+    <media-player key-target="document" view-type="audio" load="eager">
       <media-provider></media-provider>
       <media-audio-layout>
       </media-audio-layout>
     </media-player>
   </div>
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const handle = document.getElementById('sidebar-resize-handle');
+    const mainContent = document.querySelector('.main-content');
+    let isResizing = false;
+    function isNarrow() {
+      return window.innerWidth <= 576;
+    }
+    handle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = isNarrow() ? 'row-resize' : 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      if (isNarrow()) {
+        const height = Math.min(Math.max(e.clientY, 50), window.innerHeight * 0.6);
+        mainContent.style.flexBasis = height + 'px';
+      } else {
+        const width = Math.min(Math.max(e.clientX, 180), window.innerWidth * 0.5);
+        sidebar.style.width = width + 'px';
+      }
+    });
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+  </script>
 </body>
 
 </html>
